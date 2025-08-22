@@ -1,4 +1,4 @@
-// ✅ FILE: app/api/jadwal/route.js
+// app/api/jadwal/route.js
 import mysql from 'mysql2/promise';
 
 export async function GET() {
@@ -7,20 +7,37 @@ export async function GET() {
       host: 'localhost',
       user: 'root',
       password: '',
-      database: 'labordatenbank'
+      database: 'stern'
     });
 
-    // Gabungkan tb_jadwal dengan tb_praktikum berdasarkan ID_Praktikum
     const [rows] = await connection.execute(`
-      SELECT 
-        j.ID, j.Tanggal, j.Pertemuan_ke, j.Catatan,
-        p.Hari, p.Jam_Mulai, p.Jam_Ahir, p.Mata_Kuliah, p.Kelas, p.Shift, p.Jurusan, p.Assisten
-      FROM tb_jadwal j
-      JOIN tb_praktikum p ON j.ID_Praktikum = p.ID
+      SELECT Mata_Kuliah, Hari, Shift
+      FROM tb_praktikum
     `);
 
     await connection.end();
-    return Response.json(rows);
+
+    // Susun data menjadi { Shift: { Senin: '...', Selasa: '...', ... } }
+    const shifts = ['I','II','III','IV','V'];
+    const hariKerja = ['Senin','Selasa','Rabu','Kamis','Jumat'];
+
+    const jadwalMap = {};
+
+    shifts.forEach(shift => {
+      jadwalMap[shift] = {};
+      hariKerja.forEach(hari => {
+        jadwalMap[shift][hari] = '-'; // default
+      });
+    });
+
+    rows.forEach(item => {
+      if (jadwalMap[item.Shift] && item.Hari) {
+        jadwalMap[item.Shift][item.Hari] = item.Mata_Kuliah;
+      }
+    });
+
+    return Response.json(jadwalMap);
+
   } catch (error) {
     console.error('Gagal ambil data:', error);
     return new Response(JSON.stringify({ error: 'Gagal ambil data' }), { status: 500 });
