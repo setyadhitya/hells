@@ -1,47 +1,101 @@
-import mysql from "mysql2/promise";
-import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
-import { cookies } from "next/headers";
+"use client";
 
-async function getConnection() {
-  return await mysql.createConnection({
-    host: "localhost",
-    user: "root",
-    password: "",
-    database: "stern",
-  });
-}
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 
-export async function POST(req) {
-  const token = cookies().get("token")?.value;
-  if (!token) return new Response(JSON.stringify({ message: "unauthorized" }), { status: 403 });
+export default function Register() {
+  const router = useRouter();
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [role, setRole] = useState("praktikan");
+  const [msg, setMsg] = useState("");
 
-  try {
-    const data = jwt.verify(token, process.env.JWT_SECRET || "devsecret");
-    if (!data || data.role !== "admin") {
-      return new Response(JSON.stringify({ message: "only admin allowed" }), { status: 403 });
+  // 🔒 Client-side auth: redirect non-admin
+  useEffect(() => {
+    const roleCookie = document.cookie
+      .split("; ")
+      .find((row) => row.startsWith("role="))
+      ?.split("=")[1];
+    if (!roleCookie || roleCookie !== "admin") {
+      router.push("/");
     }
-  } catch {
-    return new Response(JSON.stringify({ message: "unauthorized" }), { status: 403 });
-  }
+  }, []);
 
-  const { username, password, role } = await req.json();
-  if (!username || !password || !role) {
-    return new Response(JSON.stringify({ message: "missing fields" }), { status: 400 });
-  }
+  const submit = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await fetch("/api/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password, role }),
+        credentials: "include", // pastikan cookie token ikut dikirim
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert("User created successfully!");
+        router.push("/admin/dashboard");
+      } else {
+        setMsg(data.message || "Register failed");
+      }
+    } catch (err) {
+      console.error(err);
+      setMsg("Something went wrong");
+    }
+  };
 
-  try {
-    const conn = await getConnection();
-    const hash = await bcrypt.hash(password, 10);
-    await conn.execute("INSERT INTO tb_users (username, role, password_hash) VALUES (?, ?, ?)", [
-      username,
-      role,
-      hash,
-    ]);
-    await conn.end();
-    return Response.json({ ok: true });
-  } catch (err) {
-    console.error(err);
-    return new Response(JSON.stringify({ message: "error creating user" }), { status: 500 });
-  }
+  return (
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-6 animate-fade-in">
+      <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8 animate-slide-up">
+        <h1 className="text-2xl font-bold text-gray-800 mb-6">
+          Register - <span className="text-indigo-600">Admin Only</span>
+        </h1>
+
+        <form onSubmit={submit} className="space-y-5">
+          <div>
+            <label className="block text-gray-700 font-medium mb-1">Username</label>
+            <input
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              required
+              className="w-full border border-gray-300 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-gray-700 font-medium mb-1">Password</label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className="w-full border border-gray-300 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-gray-700 font-medium mb-1">Role</label>
+            <select
+              value={role}
+              onChange={(e) => setRole(e.target.value)}
+              className="w-full border border-gray-300 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            >
+              <option value="admin">admin</option>
+              <option value="laboran">laboran</option>
+              <option value="asisten">asisten</option>
+              <option value="praktikan">praktikan</option>
+            </select>
+          </div>
+
+          <button
+            type="submit"
+            className="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-medium py-2 px-4 rounded-xl transition"
+          >
+            Create User
+          </button>
+
+          {msg && <p className="text-red-500 text-sm text-center">{msg}</p>}
+        </form>
+      </div>
+    </div>
+  );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 export default function Register() {
@@ -10,17 +10,40 @@ export default function Register() {
   const [role, setRole] = useState("praktikan");
   const [msg, setMsg] = useState("");
 
+  // 🔒 Client-side auth: hanya admin yang bisa akses halaman ini
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const userRole = localStorage.getItem("role");
+    if (!token || userRole !== "admin") {
+      router.push("/");
+    }
+  }, []);
+
   const submit = async (e) => {
     e.preventDefault();
+    const token = localStorage.getItem("token"); // kirim token ke API
+    if (!token) {
+      setMsg("Unauthorized");
+      return;
+    }
+
     const res = await fetch("/api/register", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { 
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + token
+      },
       body: JSON.stringify({ username, password, role }),
     });
+
     const data = await res.json();
+
     if (res.ok) {
-      router.push("/dashboard");
-    } else setMsg(data.message || "Register failed");
+      alert("User created successfully!");
+      router.push("/admin/dashboard"); // redirect ke dashboard admin
+    } else {
+      setMsg(data.message || "Register failed");
+    }
   };
 
   return (
@@ -32,9 +55,7 @@ export default function Register() {
 
         <form onSubmit={submit} className="space-y-5">
           <div>
-            <label className="block text-gray-700 font-medium mb-1">
-              Username
-            </label>
+            <label className="block text-gray-700 font-medium mb-1">Username</label>
             <input
               value={username}
               onChange={(e) => setUsername(e.target.value)}
@@ -44,9 +65,7 @@ export default function Register() {
           </div>
 
           <div>
-            <label className="block text-gray-700 font-medium mb-1">
-              Password
-            </label>
+            <label className="block text-gray-700 font-medium mb-1">Password</label>
             <input
               type="password"
               value={password}
@@ -57,9 +76,7 @@ export default function Register() {
           </div>
 
           <div>
-            <label className="block text-gray-700 font-medium mb-1">
-              Role
-            </label>
+            <label className="block text-gray-700 font-medium mb-1">Role</label>
             <select
               value={role}
               onChange={(e) => setRole(e.target.value)}
