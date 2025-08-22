@@ -12,7 +12,7 @@ export default function Home() {
     { name: 'Modul Praktikum', href: '/modul' },
     { name: 'Peminjaman Lab', href: '/peminjaman' },
     { name: 'Calendar', href: '/calendar' },
-    { name: 'Pendaftaran', href: '/daftar' },
+    { name: 'Pendaftaran', href: '/pendaftaran' },
   ];
 
   return (
