@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react';
-import { QRCodeCanvas } from 'qrcode.react'
+//import { QRCodeCanvas } from 'qrcode.react'
 
 const dataPresensi = [
     { matkul: 'Jaringan Komputer 1', jamMulai: '08:00', jamSelesai: '10:00' },
