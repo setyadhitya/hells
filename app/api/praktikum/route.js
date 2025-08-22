@@ -5,7 +5,7 @@ async function getConnection() {
     host: "localhost",
     user: "root",
     password: "",
-    database: "stern", // sesuai file SQL yang kamu upload
+    database: "stern",
   });
 }
 
@@ -37,12 +37,42 @@ export async function POST(req) {
       Shift,
       Assisten,
       Catatan,
-      Tanggal_Mulai, // 🟢 tanggal awal pertemuan (string "YYYY-MM-DD")
+      Tanggal_Mulai, // 🟢 tanggal awal pertemuan
     } = body;
 
     const conn = await getConnection();
 
-    // Insert praktikum
+    // 🚨 Cek duplikasi praktikum (mata kuliah + kelas)
+    const [duplikasi] = await conn.execute(
+      `SELECT ID FROM tb_praktikum 
+       WHERE Mata_Kuliah = ? AND Kelas = ?`,
+      [Mata_Kuliah, Kelas]
+    );
+
+    if (duplikasi.length > 0) {
+      await conn.end();
+      return new Response(
+        JSON.stringify({ error: `Praktikum ${Mata_Kuliah} untuk kelas ${Kelas} sudah ada` }),
+        { status: 400 }
+      );
+    }
+
+    // 🚨 Cek tabrakan hari + shift
+    const [bentrok] = await conn.execute(
+      `SELECT ID FROM tb_praktikum 
+       WHERE Hari = ? AND Shift = ?`,
+      [Hari, Shift]
+    );
+
+    if (bentrok.length > 0) {
+      await conn.end();
+      return new Response(
+        JSON.stringify({ error: `Sudah ada praktikum di hari ${Hari}, shift ${Shift}` }),
+        { status: 400 }
+      );
+    }
+
+    // ✅ Insert praktikum baru
     const [result] = await conn.execute(
       `INSERT INTO tb_praktikum
       (Mata_Kuliah, Jurusan, Kelas, Semester, Hari, Jam_Mulai, Jam_Ahir, Shift, Assisten, Catatan)
@@ -52,7 +82,7 @@ export async function POST(req) {
 
     const newId = result.insertId;
 
-    // 🟢 Generate 10 jadwal pertemuan (setiap 7 hari sekali)
+    // ✅ Generate 10 jadwal otomatis
     let tanggalAwal = new Date(Tanggal_Mulai);
     for (let i = 1; i <= 10; i++) {
       let tanggal = new Date(tanggalAwal);
@@ -92,14 +122,45 @@ export async function PUT(req) {
     } = body;
 
     const conn = await getConnection();
+
+    // 🚨 Cek duplikasi saat update (kecuali ID yg sama)
+    const [duplikasi] = await conn.execute(
+      `SELECT ID FROM tb_praktikum 
+       WHERE Mata_Kuliah = ? AND Kelas = ? AND ID != ?`,
+      [Mata_Kuliah, Kelas, ID]
+    );
+
+    if (duplikasi.length > 0) {
+      await conn.end();
+      return new Response(
+        JSON.stringify({ error: `Praktikum ${Mata_Kuliah} untuk kelas ${Kelas} sudah ada` }),
+        { status: 400 }
+      );
+    }
+
+    // 🚨 Cek tabrakan hari + shift (kecuali ID yg sama)
+    const [bentrok] = await conn.execute(
+      `SELECT ID FROM tb_praktikum 
+       WHERE Hari = ? AND Shift = ? AND ID != ?`,
+      [Hari, Shift, ID]
+    );
+
+    if (bentrok.length > 0) {
+      await conn.end();
+      return new Response(
+        JSON.stringify({ error: `Sudah ada praktikum di hari ${Hari}, shift ${Shift}` }),
+        { status: 400 }
+      );
+    }
+
     await conn.execute(
       `UPDATE tb_praktikum
        SET Mata_Kuliah=?, Jurusan=?, Kelas=?, Semester=?, Hari=?, Jam_Mulai=?, Jam_Ahir=?, Shift=?, Assisten=?, Catatan=?
        WHERE ID=?`,
       [Mata_Kuliah, Jurusan, Kelas, Semester, Hari, Jam_Mulai, Jam_Ahir, Shift, Assisten, Catatan, ID]
     );
-    await conn.end();
 
+    await conn.end();
     return Response.json({ message: "Praktikum berhasil diperbarui" });
   } catch (err) {
     console.error("PUT Error:", err);
