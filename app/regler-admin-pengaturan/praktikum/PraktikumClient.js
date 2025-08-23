@@ -53,7 +53,7 @@ export default function PraktikumClient({ data, user }) {
     const method = editId ? "PUT" : "POST";
     const body = editId ? { ...form, ID: editId } : form;
 
-    const res = await fetch("/api/praktikum", {
+    const res = await fetch("/regler-admin-pengaturan/api/praktikum", {
       method,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
@@ -77,7 +77,7 @@ export default function PraktikumClient({ data, user }) {
   // Hapus
   const del = async (id) => {
     if (!confirm("Hapus data ini?")) return;
-    const res = await fetch(`/api/praktikum?id=${id}`, { method: "DELETE" });
+    const res = await fetch(`/regler-admin-pengaturan/api/praktikum?id=${id}`, { method: "DELETE" });
     if (res.ok) location.reload();
   };
 

@@ -59,7 +59,7 @@ export async function POST(req) {
 
     cookies().set("token", token, {
       httpOnly: true,
-      path: "/",
+      path: "/regler-admin-pengaturan/",
       maxAge: 8 * 3600,
     });
 

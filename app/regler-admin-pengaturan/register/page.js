@@ -15,7 +15,7 @@ export default function Register() {
     const token = localStorage.getItem("token");
     const userRole = localStorage.getItem("role");
     if (!token || userRole !== "admin") {
-      router.push("/");
+      router.push("/regler-admin-pengaturan/");
     }
   }, []);
 
@@ -27,7 +27,7 @@ export default function Register() {
       return;
     }
 
-    const res = await fetch("/api/register", {
+    const res = await fetch("/regler-admin-pengaturan/api/register", {
       method: "POST",
       headers: { 
         "Content-Type": "application/json",
@@ -40,7 +40,7 @@ export default function Register() {
 
     if (res.ok) {
       alert("User created successfully!");
-      router.push("/admin/dashboard"); // redirect ke dashboard admin
+      router.push("/regler-admin-pengaturan/admin/dashboard"); // redirect ke dashboard admin
     } else {
       setMsg(data.message || "Register failed");
     }

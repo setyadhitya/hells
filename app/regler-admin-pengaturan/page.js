@@ -12,14 +12,14 @@ export default function Login() {
 
   const submit = async (e) => {
     e.preventDefault();
-    const res = await fetch("/api/login", {
+    const res = await fetch("/regler-admin-pengaturan/api/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ username, password }),
     });
     const data = await res.json();
     if (res.ok) {
-      router.push("/dashboard");
+      router.push("/regler-admin-pengaturan/dashboard");
     } else {
       setMsg(data.message || "Login failed");
     }

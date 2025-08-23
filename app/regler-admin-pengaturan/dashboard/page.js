@@ -7,7 +7,7 @@ export default function Dashboard() {
   const router = useRouter();
 
   useEffect(() => {
-    fetch("/api/me")
+    fetch("/regler-admin-pengaturan/api/me")
       .then((r) => r.json())
       .then((d) => {
         if (!d?.ok) router.push("/");
@@ -16,8 +16,8 @@ export default function Dashboard() {
   }, [router]);
 
   const logout = async () => {
-    await fetch("/api/logout", { method: "POST" });
-    router.push("/");
+    await fetch("/regler-admin-pengaturan/api/logout", { method: "POST" });
+    router.push("/regler-admin-pengaturan/");
   };
 
   if (!user)
@@ -41,7 +41,7 @@ export default function Dashboard() {
 
           {user.role === "admin" && (
             <a
-              href="/register"
+              href="/regler-admin-pengaturan/register"
               className="block w-full px-4 py-2 text-center bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl transition"
             >
               Open Register
@@ -50,7 +50,7 @@ export default function Dashboard() {
 
           {user.role === "admin" && (
             <a
-              href="/praktikum"
+              href="/regler-admin-pengaturan/praktikum"
               className="block w-full px-4 py-2 text-center bg-green-500 hover:bg-green-600 text-white rounded-xl transition"
             >
               Jadwal Praktikum
