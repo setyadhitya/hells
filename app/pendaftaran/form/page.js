@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
+import { jwtDecode } from "jwt-decode"
 
 export default function FormPendaftaran() {
   const [mataKuliahList, setMataKuliahList] = useState([])
@@ -15,21 +16,19 @@ export default function FormPendaftaran() {
   useEffect(() => setMounted(true), [])
 
   // ambil token dan decode userId dengan dynamic import
-  useEffect(() => {
-    if (!mounted) return
+useEffect(() => {
+  if (!mounted) return
+  const token = localStorage.getItem('token')
+  if (token) {
+    try {
+      const decoded = jwtDecode(token)  // 👈 langsung dipanggil
+      setUserId(decoded.id)
+    } catch (err) {
+      console.error('Token invalid', err)
+    }
+  }
+}, [mounted])
 
-    import('jwt-decode').then(jwt_decode => {
-      const token = localStorage.getItem('token')
-      if (token) {
-        try {
-          const decoded = jwt_decode.default(token) // gunakan .default
-          setUserId(decoded.id)
-        } catch (err) {
-          console.error('Token invalid', err)
-        }
-      }
-    })
-  }, [mounted])
 
   // ambil daftar mata kuliah
   useEffect(() => {
@@ -117,7 +116,13 @@ export default function FormPendaftaran() {
                 ))}
               </select>
               {i === selectedMatkul.length -1 && (
-                <button type="button" onClick={addMatkul} className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 transition">+</button>
+                <button
+                  type="button"
+                  onClick={addMatkul}
+                  className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 transition"
+                >
+                  +
+                </button>
               )}
             </div>
           ))}
@@ -135,7 +140,9 @@ export default function FormPendaftaran() {
             <input type="file" accept="image/*,application/pdf" onChange={e => setKrsFile(e.target.files[0])} required />
           </div>
 
-          <button type="submit" className="bg-blue-600 text-white p-2 rounded hover:bg-blue-700 transition">Daftar</button>
+          <button type="submit" className="bg-blue-600 text-white p-2 rounded hover:bg-blue-700 transition">
+            Daftar
+          </button>
         </form>
       </div>
     </main>
