@@ -1,53 +1,67 @@
-/* app/page.tsx or app/page.jsx (Next.js 15 App Router) */
-
+/* app/page.tsx (Next.js 15 App Router) */
 'use client'
 
-import { useState } from 'react';
-import Link from 'next/link';
+import Link from 'next/link'
+import { motion } from 'framer-motion'
+import { Calendar, BookOpen, Users, ClipboardList, LayoutDashboard, FileText } from "lucide-react"
 
 export default function Home() {
   const navItems = [
-    { name: 'Jadwal Praktikum', href: '/jadwal' },
-    { name: 'Presensi Praktikum', href: '/presensi' },
-    { name: 'Modul Praktikum', href: '/modul' },
-    { name: 'Peminjaman Lab', href: '/peminjaman' },
-    { name: 'Calendar', href: '/calendar' },
-    { name: 'Pendaftaran', href: '/pendaftaran' },
-  ];
+    { name: 'Jadwal Praktikum', href: '/jadwal', icon: LayoutDashboard },
+    { name: 'Presensi Praktikum', href: '/presensi', icon: ClipboardList },
+    { name: 'Modul Praktikum', href: '/modul', icon: BookOpen },
+    { name: 'Peminjaman Lab', href: '/peminjaman', icon: Users },
+    { name: 'Calendar', href: '/calendar', icon: Calendar },
+    { name: 'Pendaftaran', href: '/pendaftaran', icon: FileText },
+  ]
 
   return (
-    <main className="min-h-screen bg-gray-50">
+    <main className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
 
-      <section className="py-20 text-center">
-        <h2 className="text-4xl font-bold text-gray-800 mb-4">Selamat Datang di Situs LabKom 3</h2>
-        <p className="text-gray-600 max-w-xl mx-auto">
-          Situs ini menyediakan layanan penting untuk kegiatan praktikum tanpa basa-basi.
+      {/* Hero Section */}
+      <section className="py-24 text-center">
+        <h2 className="text-5xl font-extrabold text-gray-800 mb-6">
+          Selamat Datang di <span className="text-blue-600">LabKom 3</span>
+        </h2>
+        <p className="text-gray-600 max-w-2xl mx-auto text-lg leading-relaxed">
+          Situs ini menyediakan layanan penting untuk mendukung kegiatan praktikum Anda dengan cepat, mudah, dan tanpa basa-basi.
         </p>
       </section>
 
-      <section className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 px-4 pb-20">
-        {navItems.map((item) => (
-          <div
-            key={item.name}
-            className="bg-white rounded-2xl shadow p-6 hover:shadow-lg transition"
-          >
-            <h3 className="text-xl font-semibold text-gray-800 mb-2">{item.name}</h3>
-            <p className="text-gray-600 text-sm mb-4">
-              Akses informasi dan layanan terkait {item.name.toLowerCase()} di sini.
-            </p>
-            <Link
-              href={item.href}
-              className="text-blue-600 font-medium hover:underline"
+      {/* Menu Cards */}
+      <section className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 px-6 pb-24">
+        {navItems.map((item, i) => {
+          const Icon = item.icon
+          return (
+            <motion.div
+              key={item.name}
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: i * 0.1 }}
             >
-              Lihat Detail
-            </Link>
-          </div>
-        ))}
+              <Link
+                href={item.href}
+                className="block bg-white rounded-2xl shadow-md hover:shadow-xl transition-all p-8 group hover:bg-blue-50"
+              >
+                {/* Icon Circle */}
+                <div className="w-12 h-12 flex items-center justify-center rounded-xl bg-blue-50 text-blue-600 mb-4 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                  <Icon size={24} />
+                </div>
+
+                <h3 className="text-xl font-semibold text-gray-800 mb-3">{item.name}</h3>
+                <p className="text-gray-600 text-sm">
+                  Akses informasi dan layanan terkait {item.name.toLowerCase()} di sini.
+                </p>
+              </Link>
+            </motion.div>
+          )
+        })}
       </section>
 
-      <footer className="text-center text-sm text-gray-400 py-1 border-t">
-        <strong>© 2025 LabKom 3 Jaringan. Dibuat tanpa basa-basi oleh PLP.</strong>
+      {/* Footer */}
+      <footer className="text-center text-sm text-gray-500 py-6 border-t bg-white/70 backdrop-blur">
+        <strong>© 2025 LabKom 3 Jaringan</strong> • Dibuat tanpa basa-basi oleh <span className="text-blue-600">PLP</span>
       </footer>
     </main>
-  );
+  )
 }
