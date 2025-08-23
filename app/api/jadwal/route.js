@@ -6,7 +6,7 @@ export async function GET() {
       host: 'localhost',
       user: 'root',
       password: '',
-      database: 'labordatenbank'
+      database: 'stern'
     });
 
     const [rows] = await connection.execute(`

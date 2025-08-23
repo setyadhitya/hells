@@ -14,7 +14,7 @@ export async function GET(req) {
       host: 'localhost',
       user: 'root',
       password: '',
-      database: 'labordatenbank'
+      database: 'stern'
     });
 
     const [rows] = await conn.execute(`
