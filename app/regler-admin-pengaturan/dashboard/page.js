@@ -57,6 +57,15 @@ export default function Dashboard() {
             </a>
           )}
 
+          {user.role === "admin" && (
+            <a
+              href="/regler-admin-pengaturan/modul"
+              className="block w-full px-4 py-2 text-center bg-green-500 hover:bg-green-600 text-white rounded-xl transition"
+            >
+              Modul
+            </a>
+          )}
+
           <button
             onClick={logout}
             className="w-full px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-xl transition"
