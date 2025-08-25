@@ -15,7 +15,7 @@ export async function GET(req, { params }) {
   try {
     const conn = await getConnection();
     const [rows] = await conn.execute(
-      "SELECT * FROM tb_halaman WHERE id = ?",
+      "SELECT * FROM tb_modul_halaman WHERE id = ?",
       [params.id]
     );
     await conn.end();
@@ -37,7 +37,7 @@ export async function PUT(req, { params }) {
     const conn = await getConnection();
 
     const [result] = await conn.execute(
-      "UPDATE tb_halaman SET modul_id = ?, nomor_halaman = ?, isi = ? WHERE id = ?",
+      "UPDATE tb_modul_halaman SET modul_id = ?, nomor_halaman = ?, isi = ? WHERE id = ?",
       [modul_id, nomor_halaman, isi, params.id]
     );
     await conn.end();
@@ -57,7 +57,7 @@ export async function PUT(req, { params }) {
 export async function DELETE(req, { params }) {
   try {
     const conn = await getConnection();
-    const [result] = await conn.execute("DELETE FROM tb_halaman WHERE id = ?", [
+    const [result] = await conn.execute("DELETE FROM tb_modul_halaman WHERE id = ?", [
       params.id,
     ]);
     await conn.end();

@@ -17,7 +17,7 @@ export async function GET() {
     const [rows] = await conn.execute(
       `SELECT h.id, h.modul_id, m.judul AS modul, 
               h.nomor_halaman, h.isi, h.created_at
-       FROM tb_halaman h
+       FROM tb_modul_halaman h
        JOIN tb_modul m ON h.modul_id = m.id
        ORDER BY h.id DESC`
     );
@@ -39,7 +39,7 @@ export async function POST(req) {
 
     const conn = await getConnection();
     const [result] = await conn.execute(
-      "INSERT INTO tb_halaman (modul_id, nomor_halaman, isi) VALUES (?, ?, ?)",
+      "INSERT INTO tb_modul_halaman (modul_id, nomor_halaman, isi) VALUES (?, ?, ?)",
       [modul_id, nomor_halaman, isi]
     );
     await conn.end();
