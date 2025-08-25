@@ -71,7 +71,16 @@ export default function Dashboard() {
               href="/regler-admin-pengaturan/halaman"
               className="block w-full px-4 py-2 text-center bg-green-500 hover:bg-green-600 text-white rounded-xl transition"
             >
-              Halaman
+              Modul Halaman
+            </a>
+          )}
+
+          {user.role === "admin" && (
+            <a
+              href="/regler-admin-pengaturan/modul_gambar"
+              className="block w-full px-4 py-2 text-center bg-green-500 hover:bg-green-600 text-white rounded-xl transition"
+            >
+              Modul Gambar
             </a>
           )}
 
