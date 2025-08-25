@@ -1,3 +1,4 @@
+import { NextResponse } from "next/server";
 import mysql from "mysql2/promise";
 
 async function getConnection() {
@@ -9,22 +10,51 @@ async function getConnection() {
   });
 }
 
-// GET ALL
+// GET semua halaman (join modul untuk dapat judul)
 export async function GET() {
-  const db = await getConnection();
-  const [rows] = await db.query("SELECT * FROM tb_halaman ORDER BY id DESC");
-  await db.end();
-  return Response.json(rows);
+  try {
+    const conn = await getConnection();
+    const [rows] = await conn.execute(
+      `SELECT h.id, h.modul_id, m.judul AS modul, 
+              h.nomor_halaman, h.isi, h.created_at
+       FROM tb_halaman h
+       JOIN tb_modul m ON h.modul_id = m.id
+       ORDER BY h.id DESC`
+    );
+    await conn.end();
+    return NextResponse.json(rows);
+  } catch (err) {
+    console.error("GET halaman error:", err);
+    return NextResponse.json(
+      { error: "Gagal ambil data halaman" },
+      { status: 500 }
+    );
+  }
 }
 
-// CREATE
+// POST tambah halaman
 export async function POST(req) {
-  const { modul_id, nomor_halaman, isi } = await req.json();
-  const db = await getConnection();
-  await db.query(
-    "INSERT INTO tb_halaman (modul_id, nomor_halaman, isi) VALUES (?, ?, ?)",
-    [modul_id, nomor_halaman, isi]
-  );
-  await db.end();
-  return Response.json({ message: "Halaman created" });
+  try {
+    const { modul_id, nomor_halaman, isi } = await req.json();
+
+    const conn = await getConnection();
+    const [result] = await conn.execute(
+      "INSERT INTO tb_halaman (modul_id, nomor_halaman, isi) VALUES (?, ?, ?)",
+      [modul_id, nomor_halaman, isi]
+    );
+    await conn.end();
+
+    return NextResponse.json({
+      id: result.insertId,
+      modul_id,
+      nomor_halaman,
+      isi,
+    });
+  } catch (err) {
+    console.error("POST halaman error:", err);
+    return NextResponse.json(
+      { error: "Gagal tambah halaman" },
+      { status: 500 }
+    );
+  }
 }
