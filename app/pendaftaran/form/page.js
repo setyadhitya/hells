@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { jwtDecode } from "jwt-decode"
+import { useRouter } from 'next/navigation'
 
 export default function FormPendaftaran() {
   const [mataKuliahList, setMataKuliahList] = useState([])
@@ -10,44 +11,39 @@ export default function FormPendaftaran() {
   const [krsFile, setKrsFile] = useState(null)
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' })
   const [userInfo, setUserInfo] = useState({ id_nim: null, nim: '', nama: '' })
-  const [mounted, setMounted] = useState(false)
+  const router = useRouter()
 
-  useEffect(() => setMounted(true), [])
+  // ambil token & data user
+  useEffect(() => {
+    const fetchPraktikan = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) return;
 
-// ambil token & data user
-useEffect(() => {
-  const fetchPraktikan = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) return;
+        const decoded = jwtDecode(token);
 
-      const decoded = jwtDecode(token);
+        const res = await fetch(`/api/praktikan/${decoded.id_nim}`);
+        if (!res.ok) throw new Error("Gagal ambil data praktikan");
 
-      const res = await fetch(`/api/praktikan/${decoded.id_nim}`);
-      if (!res.ok) throw new Error("Gagal ambil data praktikan");
+        const data = await res.json();
 
-      const data = await res.json();
+        setUserInfo({
+          id_nim: data.id,   // sesuaikan dengan field tabel tb_praktikan
+          nim: data.nim,
+          nama: data.nama,
+        });
 
-      // perbaikan di sini
-      setUserInfo({
-        id_nim: data.id,     // sesuaikan dengan kolom di tb_nim
-        nim: data.nim,
-        nama: data.nama,
-      });
-
-      // kalau mau sekaligus isi mata kuliah
-      if (data.mata_kuliah) {
-        setMataKuliahList(data.mata_kuliah.split(","));
+        // kalau API praktikan mengembalikan daftar mata kuliah
+        if (data.mata_kuliah) {
+          setMataKuliahList(data.mata_kuliah.split(","));
+        }
+      } catch (err) {
+        console.error(err);
       }
-    } catch (err) {
-      console.error(err);
-    }
-  };
+    };
 
-  fetchPraktikan();
-}, []);
-
-
+    fetchPraktikan();
+  }, []);
 
   const handleMatkulChange = (index, value) => {
     const newSelected = [...selectedMatkul]
@@ -89,8 +85,16 @@ useEffect(() => {
         body: formData
       })
       const result = await res.json()
-      if (result.message) setToast({ show: true, message: result.message, type: 'success' })
-      else setToast({ show: true, message: result.error, type: 'error' })
+      if (res.ok) {
+        setToast({ show: true, message: result.message, type: 'success' })
+
+        // tunggu sebentar biar toast sempat muncul
+        setTimeout(() => {
+          router.push("/profil")
+        }, 1500)
+      } else {
+        setToast({ show: true, message: result.error || "Gagal mendaftar", type: 'error' })
+      }
     } catch (err) {
       setToast({ show: true, message: 'Gagal mendaftar', type: 'error' })
     }
@@ -131,7 +135,7 @@ useEffect(() => {
                   <option key={idx} value={matkul}>{matkul}</option>
                 ))}
               </select>
-              {i === selectedMatkul.length -1 && (
+              {i === selectedMatkul.length - 1 && (
                 <button
                   type="button"
                   onClick={addMatkul}

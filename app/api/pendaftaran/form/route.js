@@ -42,9 +42,10 @@ export async function POST(req) {
 
     await connection.end();
 
-    return new Response(JSON.stringify({ message: "Pendaftaran berhasil!" }), {
-      status: 200,
-    });
+    return new Response(
+      JSON.stringify({ message: "Pendaftaran berhasil!" }),
+      { status: 200 }
+    );
   } catch (err) {
     console.error("FORM ERROR:", err);
     return new Response(JSON.stringify({ error: "Gagal mendaftar" }), {
