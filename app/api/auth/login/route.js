@@ -1,8 +1,9 @@
-import mysql from 'mysql2/promise' 
+import mysql from 'mysql2/promise'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
+import { cookies } from 'next/headers'
 
-const SECRET = 'RAHASIA_JWT' // sebaiknya simpan di .env
+const SECRET = process.env.JWT_SECRET || 'RAHASIA_JWT' // sebaiknya di .env
 
 export async function POST(req) {
   try {
@@ -47,7 +48,16 @@ export async function POST(req) {
       { expiresIn: '8h' }
     )
 
-    return new Response(JSON.stringify({ token }), { status: 200 })
+    // simpan token di cookies agar bisa dibaca server
+    const cookieStore = await cookies()
+    cookieStore.set('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      path: '/',
+      maxAge: 60 * 60 * 8, // 8 jam
+    })
+
+    return new Response(JSON.stringify({ ok: true }), { status: 200 })
   } catch (err) {
     console.error('LOGIN ERROR:', err)
     return new Response(

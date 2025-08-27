@@ -1,29 +1,47 @@
-'use client'
-import { useEffect, useState } from 'react'
-import { jwtDecode } from "jwt-decode"
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function ProfilPage() {
-  const [userInfo, setUserInfo] = useState({ nim: '', nama: '' })
+  const [user, setUser] = useState(null);
+  const router = useRouter();
 
   useEffect(() => {
-    const token = localStorage.getItem("token")
-    if (token) {
-      const decoded = jwtDecode(token)
-      setUserInfo({
-        nim: decoded.nim,
-        nama: decoded.nama
-      })
+    async function fetchUser() {
+      const res = await fetch("/api/me", {
+        credentials: "include", // ✅ wajib biar cookie ikut
+      });
+      const data = await res.json();
+
+      if (!data.ok) {
+        router.push("/login");
+      } else {
+        setUser(data.user);
+      }
     }
-  }, [])
+    fetchUser();
+  }, [router]);
+
+  const handleLogout = async () => {
+    await fetch("/api/auth/logout", { method: "POST", credentials: "include" }); // ✅ sertakan cookie
+    router.push("/login");
+  };
+
+  if (!user) return <p>Loading...</p>;
 
   return (
-    <main className="min-h-screen p-6 flex justify-center bg-gray-50">
-      <div className="w-full max-w-lg bg-white shadow p-6 rounded-lg">
-        <h1 className="text-2xl font-bold mb-4">Profil Praktikan</h1>
-        <p><strong>NIM:</strong> {userInfo.nim}</p>
-        <p><strong>Nama:</strong> {userInfo.nama}</p>
-        <p className="mt-4 text-green-700 font-semibold">✅ Pendaftaran praktikum berhasil!</p>
-      </div>
-    </main>
-  )
+    <div className="p-5">
+      <h1 className="text-xl font-bold">Profil Praktikan</h1>
+      <p>ID: {user.id}</p>
+      <p>Email: {user.email}</p>
+
+      <button
+        onClick={handleLogout}
+        className="mt-4 bg-red-600 text-white p-2 rounded hover:bg-red-700 transition"
+      >
+        Logout
+      </button>
+    </div>
+  );
 }
