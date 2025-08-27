@@ -9,34 +9,45 @@ export default function FormPendaftaran() {
   const [fotoFile, setFotoFile] = useState(null)
   const [krsFile, setKrsFile] = useState(null)
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' })
-  const [userId, setUserId] = useState(null)
+  const [userInfo, setUserInfo] = useState({ id_nim: null, nim: '', nama: '' })
   const [mounted, setMounted] = useState(false)
 
-  // tanda bahwa komponen sudah mount di client
   useEffect(() => setMounted(true), [])
 
-  // ambil token dan decode userId dengan dynamic import
+// ambil token & data user
 useEffect(() => {
-  if (!mounted) return
-  const token = localStorage.getItem('token')
-  if (token) {
+  const fetchPraktikan = async () => {
     try {
-      const decoded = jwtDecode(token)  // 👈 langsung dipanggil
-      setUserId(decoded.id)
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      const decoded = jwtDecode(token);
+
+      const res = await fetch(`/api/praktikan/${decoded.id_nim}`);
+      if (!res.ok) throw new Error("Gagal ambil data praktikan");
+
+      const data = await res.json();
+
+      // perbaikan di sini
+      setUserInfo({
+        id_nim: data.id,     // sesuaikan dengan kolom di tb_nim
+        nim: data.nim,
+        nama: data.nama,
+      });
+
+      // kalau mau sekaligus isi mata kuliah
+      if (data.mata_kuliah) {
+        setMataKuliahList(data.mata_kuliah.split(","));
+      }
     } catch (err) {
-      console.error('Token invalid', err)
+      console.error(err);
     }
-  }
-}, [mounted])
+  };
+
+  fetchPraktikan();
+}, []);
 
 
-  // ambil daftar mata kuliah
-  useEffect(() => {
-    fetch('/api/praktikum')
-      .then(res => res.json())
-      .then(data => setMataKuliahList(data))
-      .catch(err => console.error(err))
-  }, [])
 
   const handleMatkulChange = (index, value) => {
     const newSelected = [...selectedMatkul]
@@ -45,16 +56,16 @@ useEffect(() => {
   }
 
   const addMatkul = () => setSelectedMatkul([...selectedMatkul, ''])
+  const removeMatkul = (index) => {
+    const newSelected = [...selectedMatkul]
+    newSelected.splice(index, 1)
+    setSelectedMatkul(newSelected)
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (!ktmFile || !fotoFile || !krsFile) {
       setToast({ show: true, message: 'Semua file wajib diupload', type: 'error' })
-      return
-    }
-
-    if (!userId) {
-      setToast({ show: true, message: 'User belum login', type: 'error' })
       return
     }
 
@@ -70,10 +81,10 @@ useEffect(() => {
     formData.append('ktm', ktmFile)
     formData.append('foto', fotoFile)
     formData.append('krs', krsFile)
-    formData.append('user_id', userId)
+    formData.append('id_nim', userInfo.id_nim)
 
     try {
-      const res = await fetch('/api/pendaftaran', {
+      const res = await fetch('/api/pendaftaran/form', {
         method: 'POST',
         body: formData
       })
@@ -101,6 +112,11 @@ useEffect(() => {
 
         <h1 className="text-2xl font-bold mb-4 text-gray-800">Form Pendaftaran Praktikum</h1>
 
+        <div className="mb-4 p-3 border rounded bg-gray-100">
+          <p><strong>NIM:</strong> {userInfo.nim}</p>
+          <p><strong>Nama:</strong> {userInfo.nama}</p>
+        </div>
+
         <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow-md flex flex-col gap-4">
           {selectedMatkul.map((val, i) => (
             <div key={i} className="flex gap-2 items-center">
@@ -111,8 +127,8 @@ useEffect(() => {
                 required
               >
                 <option value="">-- Pilih Mata Kuliah --</option>
-                {mataKuliahList.map(matkul => (
-                  <option key={matkul.ID} value={matkul.ID}>{matkul.Mata_Kuliah}</option>
+                {mataKuliahList.map((matkul, idx) => (
+                  <option key={idx} value={matkul}>{matkul}</option>
                 ))}
               </select>
               {i === selectedMatkul.length -1 && (
@@ -122,6 +138,15 @@ useEffect(() => {
                   className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 transition"
                 >
                   +
+                </button>
+              )}
+              {selectedMatkul.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => removeMatkul(i)}
+                  className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 transition"
+                >
+                  -
                 </button>
               )}
             </div>
