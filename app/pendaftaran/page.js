@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 export default function LoginPage() {
-  const [username, setUsername] = useState('')
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const router = useRouter()
@@ -16,7 +16,7 @@ export default function LoginPage() {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
+        body: JSON.stringify({ email, password })
       })
       const data = await res.json()
 
@@ -39,14 +39,14 @@ export default function LoginPage() {
         {error && <p className="text-red-600">{error}</p>}
 
         <input
-          type="text"
-          placeholder="Username"
-          value={username}
-          onChange={e => setUsername(e.target.value)}
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={e => setEmail(e.target.value)}
           className="border p-2 rounded"
           required
-        />
-        <input
+        />       
+         <input
           type="password"
           placeholder="Password"
           value={password}
@@ -59,7 +59,7 @@ export default function LoginPage() {
 
         <p className="text-sm text-gray-500 mt-2">
           Belum punya akun?{' '}
-          <a href="/pendaftaran/request-akun" className="text-blue-600 hover:underline">Daftar sekarang</a>
+          <a href="/pendaftaran/buat_akun" className="text-blue-600 hover:underline">Daftar sekarang</a>
         </p>
       </form>
     </main>

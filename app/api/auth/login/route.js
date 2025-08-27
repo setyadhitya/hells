@@ -1,10 +1,12 @@
-import mysql from 'mysql2/promise'
+import mysql from 'mysql2/promise' 
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 
+const SECRET = 'RAHASIA_JWT' // sebaiknya simpan di .env
+
 export async function POST(req) {
   try {
-    const { username, password } = await req.json()
+    const { email, password } = await req.json()
 
     const connection = await mysql.createConnection({
       host: 'localhost',
@@ -13,20 +15,44 @@ export async function POST(req) {
       database: 'stern'
     })
 
-    const [rows] = await connection.execute('SELECT * FROM tb_users WHERE username = ?', [username])
+    // cek user berdasarkan email
+    const [rows] = await connection.execute(
+      'SELECT * FROM tb_users_praktikan WHERE email = ?',
+      [email]
+    )
     await connection.end()
 
-    if (rows.length === 0) return new Response(JSON.stringify({ error: 'Username tidak ditemukan' }), { status: 401 })
+    if (rows.length === 0) {
+      return new Response(
+        JSON.stringify({ error: 'Email tidak ditemukan' }),
+        { status: 401 }
+      )
+    }
 
     const user = rows[0]
-    const isValid = await bcrypt.compare(password, user.password_hash)
-    if (!isValid) return new Response(JSON.stringify({ error: 'Password salah' }), { status: 401 })
 
-    const token = jwt.sign({ id: user.id, username: user.username, role: user.role }, 'RAHASIA_JWT', { expiresIn: '8h' })
+    // cocokkan password dengan bcrypt
+    const isValid = await bcrypt.compare(password, user.password)
+    if (!isValid) {
+      return new Response(
+        JSON.stringify({ error: 'Password salah' }),
+        { status: 401 }
+      )
+    }
+
+    // generate token
+    const token = jwt.sign(
+      { id: user.id, email: user.email, id_nim: user.id_nim },
+      SECRET,
+      { expiresIn: '8h' }
+    )
 
     return new Response(JSON.stringify({ token }), { status: 200 })
   } catch (err) {
-    console.error(err)
-    return new Response(JSON.stringify({ error: 'Gagal login' }), { status: 500 })
+    console.error('LOGIN ERROR:', err)
+    return new Response(
+      JSON.stringify({ error: 'Gagal login' }),
+      { status: 500 }
+    )
   }
 }
