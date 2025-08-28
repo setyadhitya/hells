@@ -12,18 +12,13 @@ async function getConnection() {
 }
 
 export async function GET() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get("token")?.value;
-
+  const token = cookies().get("token")?.value;
   if (!token) return Response.json({ ok: false });
 
   try {
     const data = jwt.verify(token, process.env.JWT_SECRET || "devsecret");
     const conn = await getConnection();
-    const [rows] = await conn.execute(
-      "SELECT id, email FROM tb_users_praktikan WHERE id = ?",
-      [data.id]
-    );
+    const [rows] = await conn.execute("SELECT id, email, password FROM tb_users_praktikan WHERE id = ?", [data.id]);
     await conn.end();
 
     const user = rows[0];

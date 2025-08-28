@@ -1,47 +1,50 @@
-"use client";
-
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+'use client'
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 
 export default function ProfilPage() {
-  const [user, setUser] = useState(null);
-  const router = useRouter();
+  const [user, setUser] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const router = useRouter()
 
   useEffect(() => {
-    async function fetchUser() {
-      const res = await fetch("/api/me", {
-        credentials: "include", // ✅ wajib biar cookie ikut
-      });
-      const data = await res.json();
+    const checkAuth = async () => {
+      try {
+        const res = await fetch('/api/me')
+        const data = await res.json()
 
-      if (!data.ok) {
-        router.push("/login");
-      } else {
-        setUser(data.user);
+        if (!data.ok) {
+          router.push('/login')
+        } else {
+          setUser(data.user)
+        }
+      } catch (err) {
+        router.push('/login')
+      } finally {
+        setLoading(false)
       }
     }
-    fetchUser();
-  }, [router]);
 
-  const handleLogout = async () => {
-    await fetch("/api/auth/logout", { method: "POST", credentials: "include" }); // ✅ sertakan cookie
-    router.push("/login");
-  };
+    checkAuth()
+  }, [router])
 
-  if (!user) return <p>Loading...</p>;
+  if (loading) {
+    return <p className="text-center mt-10">Loading...</p>
+  }
 
   return (
-    <div className="p-5">
-      <h1 className="text-xl font-bold">Profil Praktikan</h1>
-      <p>ID: {user.id}</p>
-      <p>Email: {user.email}</p>
-
-      <button
-        onClick={handleLogout}
-        className="mt-4 bg-red-600 text-white p-2 rounded hover:bg-red-700 transition"
-      >
-        Logout
-      </button>
-    </div>
-  );
+    <main className="min-h-screen flex items-center justify-center bg-gray-100">
+      <div className="bg-white p-6 rounded shadow-md w-96">
+        <h1 className="text-xl font-bold mb-4">Profil</h1>
+        {user ? (
+          <div>
+            <p><strong>ID:</strong> {user.id}</p>
+            <p><strong>Email:</strong> {user.email}</p>
+          </div>
+        ) : (
+          <p>Belum login</p>
+        )}
+      </div>
+    </main>
+  )
 }

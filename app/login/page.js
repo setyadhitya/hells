@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('')
+  const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const router = useRouter()
@@ -13,18 +13,17 @@ export default function LoginPage() {
     setError('')
 
     try {
-      const res = await fetch('/api/auth/login', {
+      const res = await fetch('/api/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
+        body: JSON.stringify({ username, password })
       })
       const data = await res.json()
 
-      if (res.ok && data.token) {
-        localStorage.setItem('token', data.token) // simpan token di localStorage
+      if (res.ok && data.ok) {
         router.push('/profil')
       } else {
-        setError(data.error || 'Login gagal')
+        setError(data.message || 'Login gagal')
       }
     } catch (err) {
       setError('Gagal login, coba lagi')
@@ -39,14 +38,14 @@ export default function LoginPage() {
         {error && <p className="text-red-600">{error}</p>}
 
         <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={e => setEmail(e.target.value)}
+          type="text"
+          placeholder="Username"
+          value={username}
+          onChange={e => setUsername(e.target.value)}
           className="border p-2 rounded"
           required
-        />       
-         <input
+        />
+        <input
           type="password"
           placeholder="Password"
           value={password}
@@ -56,11 +55,6 @@ export default function LoginPage() {
         />
 
         <button type="submit" className="bg-blue-600 text-white p-2 rounded hover:bg-blue-700 transition">Login</button>
-
-        <p className="text-sm text-gray-500 mt-2">
-          Belum punya akun?{' '}
-          <a href="/pendaftaran/buat_akun" className="text-blue-600 hover:underline">Daftar sekarang</a>
-        </p>
       </form>
     </main>
   )
