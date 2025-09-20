@@ -10,7 +10,7 @@ export default function Dashboard() {
     fetch("/regler-admin-pengaturan/api/me")
       .then((r) => r.json())
       .then((d) => {
-        if (!d?.ok) router.push("/");
+        if (!d?.ok) router.push("/regler-admin-pengaturan/login");
         else setUser(d.user);
       });
   }, [router]);

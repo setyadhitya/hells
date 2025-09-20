@@ -1,4 +1,6 @@
-"use client"; // ⬅️ WAJIB di paling atas
+
+"use client";
+export const dynamic = "force-dynamic"; // ⬅️ Tambah ini di paling atas
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -40,7 +42,7 @@ export default function Login() {
               required
               className="w-full border px-10 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
-            {/* User Icon */}
+            {/* Icon User */}
             <svg
               className="w-5 h-5 text-gray-400 absolute top-2.5 left-3"
               fill="currentColor"
@@ -64,7 +66,7 @@ export default function Login() {
               required
               className="w-full border px-10 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
-            {/* Lock Icon */}
+            {/* Icon Lock */}
             <svg
               className="w-5 h-5 text-gray-400 absolute top-2.5 left-3"
               fill="currentColor"
@@ -76,7 +78,7 @@ export default function Login() {
                 clipRule="evenodd"
               />
             </svg>
-            {/* Eye Icon */}
+            {/* Toggle Eye */}
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}

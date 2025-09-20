@@ -15,12 +15,15 @@ async function getConnection() {
 export async function POST(req) {
   const { username, password } = await req.json();
   const ip = req.headers.get("x-forwarded-for") || "";
+  const attempt_time = new Date();
 
   try {
     const conn = await getConnection();
-    const [rows] = await conn.execute("SELECT * FROM tb_users WHERE username = ?", [username]);
+    const [rows] = await conn.execute(
+      "SELECT * FROM tb_users WHERE username = ?",
+      [username]
+    );
     const user = rows[0];
-    const attempt_time = new Date();
 
     if (!user) {
       await conn.execute(
@@ -50,16 +53,18 @@ export async function POST(req) {
       return new Response(JSON.stringify({ message: "Password salah" }), { status: 401 });
     }
 
-    // ✅ Buat JWT dan simpan di cookie
+    // ✅ Buat JWT
     const token = jwt.sign(
       { id: user.id, username: user.username, role: user.role },
       process.env.JWT_SECRET || "devsecret",
       { expiresIn: "8h" }
     );
 
+    // ✅ Simpan JWT di cookie dengan path "/" (global)
     cookies().set("token", token, {
       httpOnly: true,
-      path: "/regler-admin-pengaturan/",
+      sameSite: "strict",
+      path: "/",          // 🔑 penting: samakan dengan logout
       maxAge: 8 * 3600,
     });
 
