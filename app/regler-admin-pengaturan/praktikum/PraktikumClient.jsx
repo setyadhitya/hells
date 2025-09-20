@@ -16,6 +16,18 @@ export default function PraktikumClient({ user }) {
 
   const daftarJurusan = ["Resiskom", "Informatika", "Statistika"];
 
+  const daftarKelas = ["A", "K"];
+
+  const daftarSemester = ["1", "2", "3", "4", "5", "6", "7", "8"];
+
+  const daftarShift = {
+    "Shift I": { Jam_Mulai: "07:30", Jam_Ahir: "10:30" },
+    "Shift II": { Jam_Mulai: "10:30", Jam_Ahir: "13:30" },
+    "Shift III": { Jam_Mulai: "13:30", Jam_Ahir: "16:30" },
+    "Shift IV": { Jam_Mulai: "16:30", Jam_Ahir: "19:30" },
+    "Shift V": { Jam_Mulai: "19:30", Jam_Ahir: "22:30" },
+  };
+
   const [list, setList] = useState([]);
   const [form, setForm] = useState({
     Mata_Kuliah: "",
@@ -23,11 +35,14 @@ export default function PraktikumClient({ user }) {
     Jurusan: "",
     Jurusan_Select: "",
     Kelas: "",
+    Kelas_Select: "",
     Semester: "",
+    Semester_Select: "",
     Hari: "",
     Jam_Mulai: "",
     Jam_Ahir: "",
     Shift: "",
+    Shift_Select: "",
     Assisten: "",
     Catatan: "",
     Tanggal_Mulai: "",
@@ -85,6 +100,17 @@ export default function PraktikumClient({ user }) {
           ? p.Jurusan
           : "Lainnya",
         Jurusan: p.Jurusan,
+        Kelas_Select: daftarKelas.includes(p.Kelas)
+          ? p.Kelas
+          : "Lainnya",
+        Kelas: p.Kelas,
+        Semester_Select: daftarSemester.includes(p.Semester)
+          ? p.Semester
+          : "Lainnya",
+        Semester: p.Semester,
+        Shift_Select: daftarShift[p.Shift]
+          ? p.Shift : "Lainnya",
+        Shift: p.Shift,
       });
     } else {
       setEditId(null);
@@ -94,11 +120,14 @@ export default function PraktikumClient({ user }) {
         Jurusan: "",
         Jurusan_Select: "",
         Kelas: "",
+        Kelas_Select: "",
         Semester: "",
+        Semester_Select: "",
         Hari: "",
         Jam_Mulai: "",
         Jam_Ahir: "",
         Shift: "",
+        Shift_Select: "",
         Assisten: "",
         Catatan: "",
         Tanggal_Mulai: "",
@@ -259,6 +288,118 @@ export default function PraktikumClient({ user }) {
                 className="w-full border px-3 py-2 rounded mb-2"
               />
             )}
+
+            {/* Dropdown Kelas */}
+            <select
+              value={form.Kelas_Select}
+              onChange={(e) =>
+                setForm({
+                  ...form,
+                  Kelas_Select: e.target.value,
+                  Kelas: e.target.value === "Lainnya" ? "" : e.target.value,
+                })
+              }
+              className="w-full border px-3 py-2 rounded mb-2"
+            >
+              <option value="">Pilih Kelas</option>
+              {daftarKelas.map((k) => (
+                <option key={k} value={k}>
+                  {k}
+                </option>
+              ))}
+              <option value="Lainnya">Lainnya</option>
+            </select>
+
+            {form.Kelas_Select === "Lainnya" && (
+              <input
+                placeholder="Kelas Lainnya"
+                value={form.Kelas}
+                onChange={(e) =>
+                  setForm({ ...form, Kelas: e.target.value })
+                }
+                className="w-full border px-3 py-2 rounded mb-2"
+              />
+            )}
+
+            {/* Dropdown Semester */}
+            <select
+              value={form.Semester_Select}
+              onChange={(e) =>
+                setForm({
+                  ...form,
+                  Semester_Select: e.target.value,
+                  Semester: e.target.value === "Lainnya" ? "" : e.target.value,
+                })
+              }
+              className="w-full border px-3 py-2 rounded mb-2"
+            >
+              <option value="">Pilih Semester</option>
+              {daftarSemester.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+              <option value="Lainnya">Lainnya</option>
+            </select>
+
+            {form.Semester_Select === "Lainnya" && (
+              <input
+                placeholder="Semester Lainnya"
+                value={form.Semester}
+                onChange={(e) =>
+                  setForm({ ...form, Semester: e.target.value })
+                }
+                className="w-full border px-3 py-2 rounded mb-2"
+              />
+            )}
+
+            {/* Dropdown Shift */}
+            <select
+              value={form.Shift}
+              onChange={(e) => {
+                const val = e.target.value;
+                setForm({
+                  ...form,
+                  Shift: val,
+                  Jam_Mulai: daftarShift[val]?.Jam_Mulai || "",
+                  Jam_Ahir: daftarShift[val]?.Jam_Ahir || "",
+                });
+              }}
+              className="w-full border px-3 py-2 rounded mb-2"
+            >
+              <option value="">Pilih Shift</option>
+              {Object.keys(daftarShift).map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+            </select>
+
+            {/* Input Assisten */}
+            <input
+              placeholder="Nama Asisten"
+              value={form.Assisten}
+              onChange={(e) => setForm({ ...form, Assisten: e.target.value })}
+              className="w-full border px-3 py-2 rounded mb-2"
+            />
+
+            {/* Input jamotomatis */}
+            <div className="flex gap-2">
+              <input
+                value={form.Jam_Mulai}
+                readOnly
+                className="w-1/2 border px-3 py-2 rounded bg-gray-100"
+              />
+              <input
+                value={form.Jam_Ahir}
+                readOnly
+                className="w-1/2 border px-3 py-2 rounded bg-gray-100"
+              />
+            </div>
+
+
+
+
 
             <div className="flex justify-end gap-2 mt-4">
               <button
