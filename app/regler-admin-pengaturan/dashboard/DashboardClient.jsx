@@ -16,11 +16,17 @@ export default function DashboardClient({ user }) {
     <main className="max-w-xl mx-auto py-10">
       <h1 className="text-2xl font-bold">Dashboard</h1>
       <p className="mt-2 text-gray-700">
-        Selamat datang: {user.username} — role: {user.role}
+        Halo: {user.username} — role: {user.role}
       </p>
     <div className="mt-4 space-x-4">
         <Link href="/regler-admin-pengaturan/register" className="underline">Register</Link>
-        <Link href="/regler-admin-pengaturan/dashboard" className="underline">Dashboard (protected)</Link>
+        <Link href="/regler-admin-pengaturan/dashboard" className="underline">Dashboard</Link>
+        <Link href="/regler-admin-pengaturan/praktikum" className="underline">Praktikum</Link>
+        <Link href="/regler-admin-pengaturan/presensi" className="underline">Presensi</Link>
+        <Link href="/regler-admin-pengaturan/modul" className="underline">Modul</Link>
+        <Link href="/regler-admin-pengaturan/peminjaman" className="underline">Peminjaman</Link>
+        <Link href="/regler-admin-pengaturan/kalender" className="underline">Kalender</Link>
+        <Link href="/regler-admin-pengaturan/akun" className="underline">Akun</Link>
       </div>
       <button
         onClick={handleLogout}
