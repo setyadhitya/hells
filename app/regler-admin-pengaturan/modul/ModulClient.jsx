@@ -10,7 +10,7 @@ export default function ModulClient({ user }) {
 
   // 🔹 Ambil data modul dari API
   const loadData = async () => {
-    const res = await fetch("/regler-admin-pengaturan/api/modul", {
+    const res = await fetch("/api/admin/modul", {
       cache: "no-store",
     });
     const data = await res.json();
@@ -28,7 +28,7 @@ export default function ModulClient({ user }) {
     const method = editId ? "PUT" : "POST";
     const body = editId ? { ...form, id: editId } : form;
 
-    const res = await fetch("/regler-admin-pengaturan/api/modul", {
+    const res = await fetch("/api/admin/modul", {
       method,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
@@ -45,13 +45,15 @@ export default function ModulClient({ user }) {
   };
 
   // 🔹 Delete
+  // 🔹 Delete
   const del = async (id) => {
     if (!confirm("Hapus modul ini?")) return;
-    const res = await fetch(`/regler-admin-pengaturan/api/modul/${id}`, {
+    const res = await fetch(`/api/admin/modul?id=${id}`, {
       method: "DELETE",
     });
     if (res.ok) loadData();
   };
+
 
   // 🔹 Buka modal
   const openModal = (m = null) => {
