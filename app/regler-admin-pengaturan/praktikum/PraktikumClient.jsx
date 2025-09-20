@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link"; // ✅ harus diimport
 
 export default function PraktikumClient({ user }) {
   const daftarMataKuliah = [
@@ -136,12 +137,36 @@ export default function PraktikumClient({ user }) {
     setShowModal(true);
   };
 
+  const handleLogout = async () => {
+    await fetch("/../api/auth/logout", {
+      method: "POST",
+    })
+    router.push("/regler-admin-pengaturan/login")
+  }
+
   return (
     <main className="max-w-xl mx-auto py-10">
       <h1 className="text-2xl font-bold">Praktikum</h1>
       <p className="mt-2 text-gray-700">
         Halo, {user.username} — role: {user.role}
       </p>
+
+      <div className="mt-4 space-x-4">
+        <Link href="/regler-admin-pengaturan/register" className="underline">Register</Link>
+        <Link href="/regler-admin-pengaturan/dashboard" className="underline">Dashboard</Link>
+        <Link href="/regler-admin-pengaturan/praktikum" className="underline">Praktikum</Link>
+        <Link href="/regler-admin-pengaturan/presensi" className="underline">Presensi</Link>
+        <Link href="/regler-admin-pengaturan/modul" className="underline">Modul</Link>
+        <Link href="/regler-admin-pengaturan/peminjaman" className="underline">Peminjaman</Link>
+        <Link href="/regler-admin-pengaturan/kalender" className="underline">Kalender</Link>
+        <Link href="/regler-admin-pengaturan/akun" className="underline">Akun</Link>
+      </div>
+      <button
+        onClick={handleLogout}
+        className="mt-6 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
+      >
+        Logout
+      </button>
 
       {(user.role === "admin" || user.role === "laboran") && (
         <button
