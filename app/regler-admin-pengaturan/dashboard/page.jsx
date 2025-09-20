@@ -1,5 +1,5 @@
 import { cookies } from "next/headers"
-import { verifyToken } from "../../../lib/auth"
+import { verifyToken } from "../../lib/auth"
 import DashboardClient from "./DashboardClient"
 
 export default async function Dashboard() {
