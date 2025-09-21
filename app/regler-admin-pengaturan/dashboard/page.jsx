@@ -1,11 +1,10 @@
-import { cookies } from "next/headers"
-import { verifyToken } from "../../lib/auth"
 import DashboardClient from "./DashboardClient"
+import { requireRole } from "../../../lib/requireRole"
+
 
 export default async function Dashboard() {
-  const cookieStore = await cookies()
-  const token = cookieStore.get("token")?.value || null
-  const user = token ? await verifyToken(token) : null
+  const user = await requireRole(["admin"]) // hanya admin yang boleh masuk berasal dari lib/requireRole
+
 
   if (!user) {
     return (
@@ -15,6 +14,8 @@ export default async function Dashboard() {
       </main>
     )
   }
+
+
 
   return <DashboardClient user={user} />
 }

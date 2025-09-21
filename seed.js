@@ -10,8 +10,8 @@ async function seed() {
     database: "stern"  // ganti sesuai nama database kamu
   });
 
-  const username = "haji";
-  const plainPassword = "mabur";
+  const username = "buah";
+  const plainPassword = "naga";
   const hashedPassword = await bcrypt.hash(plainPassword, 10);
 
   // cek apakah user sudah ada

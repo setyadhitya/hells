@@ -1,13 +1,14 @@
 import './globals.css'
 
 export const metadata = {
-  title: 'Next JWT Auth Demo',
+  title: "Next JWT Auth Demo",
 }
 
-export default function RootLayout({ children }) {
+export default function AdminLayout({ children }) {
   return (
-    <html lang="en">
-      <body className="bg-gray-100 text-gray-900">{children}</body>
-    </html>
+    <div className="bg-gray-100 text-gray-900 min-h-screen">
+      {children}
+    </div>
   )
 }
+

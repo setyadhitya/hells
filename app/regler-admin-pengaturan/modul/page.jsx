@@ -1,12 +1,11 @@
-import { cookies } from "next/headers"
-import { verifyToken } from "../../lib/auth"
 import ModulClient from "./ModulClient" // sesuaikan nama komponen klien
 import Link from "next/link"
+import { requireRole } from "../../../lib/requireRole"
+
 
 export default async function Modul() {
-  const cookieStore = await cookies()
-  const token = cookieStore.get("token")?.value || null
-  const user = token ? await verifyToken(token) : null
+  const user = await requireRole(["admin"]) // hanya admin yang boleh masuk berasal dari lib/requireRole
+
 
   if (!user) {
     return (
@@ -20,5 +19,6 @@ export default async function Modul() {
     )
   }
 
+  
   return <ModulClient user={user} />
 }

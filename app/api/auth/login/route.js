@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { db } from "../../../lib/db";
+import { db } from "../../../../lib/db";
 import bcrypt from "bcryptjs";
-import { signToken } from "../../../lib/auth";
+import { signToken } from "../../../../lib/auth";
 
 export async function POST(req) {
   try {
@@ -21,7 +21,9 @@ export async function POST(req) {
       return NextResponse.json({ error: "Password salah" }, { status: 401 });
     }
 
-    // Buat token pakai jose
+    console.log("DEBUG user.role:", user.role);
+
+    // Buat token
     const token = await signToken({
       id: user.id,
       username: user.username,
@@ -29,11 +31,19 @@ export async function POST(req) {
     });
 
     // Set cookie
-    const res = NextResponse.json({ message: "Login berhasil" });
+    const res = NextResponse.json({
+      message: "Login berhasil",
+      user: {
+        id: user.id,
+        username: user.username,
+        role: user.role,
+      },
+    });
+
     res.cookies.set("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
+      sameSite: "lax",
       path: "/",
       maxAge: 60 * 60, // 1 jam
     });

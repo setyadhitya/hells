@@ -12,7 +12,7 @@ export default function Home() {
     { name: 'Modul Praktikum', href: '/modul', icon: BookOpen },
     { name: 'Peminjaman Lab', href: '/peminjaman', icon: Users },
     { name: 'Calendar', href: '/calendar', icon: Calendar },
-    { name: 'Akun Mahasiswa', href: '/profil', icon: FileText },
+    { name: 'Akun Mahasiswa', href: '/regler-admin-pengaturan/login', icon: FileText },
   ]
 
   return (

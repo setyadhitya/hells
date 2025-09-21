@@ -15,18 +15,26 @@ export default function LoginPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
-          credentials: "include",   // ⬅️ ini penting supaya cookie "token" tersimpan
+        credentials: "include",   // ⬅️ supaya cookie token tersimpan
       })
 
       const data = await res.json()
 
       if (res.ok) {
-        setMessage("Login berhasil, redirect ke dashboard...")
+        setMessage("Login berhasil, redirect...")
+
         // simpan token ke localStorage (opsional)
         localStorage.setItem("token", data.token)
-        // kasih delay biar pesan sempat muncul
+
+        // redirect sesuai role
         setTimeout(() => {
-          router.push("/regler-admin-pengaturan/dashboard")
+          if (data.user?.role === "admin") {
+            router.push("/regler-admin-pengaturan/dashboard")
+          } else if (data.user?.role === "praktikan") {
+            router.push("/profil")
+          } else {
+            router.push("/") // fallback kalau role tidak dikenal
+          }
         }, 1000)
       } else {
         setMessage(data.error || "Login gagal")
@@ -42,8 +50,6 @@ export default function LoginPage() {
         <h1 className="mb-4 text-xl">Login</h1>
         <input
           type="text"
-          id="username"
-          name="username"
           placeholder="Username"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
@@ -52,8 +58,6 @@ export default function LoginPage() {
         />
         <input
           type="password"
-          id="password"
-          name="password"
           placeholder="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}

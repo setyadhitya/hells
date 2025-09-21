@@ -1,12 +1,10 @@
-import { cookies } from "next/headers"
-import { verifyToken } from "../../lib/auth"
 import PraktikumClient from "./PraktikumClient" // sesuaikan nama komponen klien
 import Link from "next/link"
+import { requireRole } from "../../../lib/requireRole"
 
 export default async function Praktikum() {
-  const cookieStore = await cookies()
-  const token = cookieStore.get("token")?.value || null
-  const user = token ? await verifyToken(token) : null
+  const user = await requireRole(["admin"]) // hanya admin yang boleh masuk berasal dari lib/requireRole
+
 
   if (!user) {
     return (

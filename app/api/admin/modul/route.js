@@ -1,5 +1,5 @@
 import mysql from "mysql2/promise";
-import { verifyToken } from "../../../lib/auth";
+import { verifyToken } from "../../../../lib/auth";
 
 async function getConnection() {
   return await mysql.createConnection({
