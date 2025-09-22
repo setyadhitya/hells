@@ -44,12 +44,12 @@ export async function POST(req) {
     }
 
     const body = await req.json();
-    const { judul, deskripsi } = body;
+    const { mata_kuliah, pertemuan, materi } = body;
 
     const conn = await getConnection();
     const [result] = await conn.execute(
-      "INSERT INTO tb_modul (judul, deskripsi) VALUES (?, ?)",
-      [judul, deskripsi]
+      "INSERT INTO tb_modul (mata_kuliah, pertemuan, materi) VALUES (?, ?, ?)",
+      [mata_kuliah, pertemuan, materi]
     );
     await conn.end();
 
@@ -63,6 +63,7 @@ export async function POST(req) {
 }
 
 // 🔹 PUT update modul
+// 🔹 PUT update modul
 export async function PUT(req) {
   try {
     const user = await auth(req);
@@ -71,12 +72,16 @@ export async function PUT(req) {
     }
 
     const body = await req.json();
-    const { id, judul, deskripsi } = body;
+    const { id, mata_kuliah, pertemuan, materi } = body;
+
+    if (!id) {
+      return new Response(JSON.stringify({ error: "ID wajib dikirim" }), { status: 400 });
+    }
 
     const conn = await getConnection();
     await conn.execute(
-      "UPDATE tb_modul SET judul=?, deskripsi=? WHERE id=?",
-      [judul, deskripsi, id]
+      "UPDATE tb_modul SET mata_kuliah=?, pertemuan=?, materi=? WHERE id=?",
+      [mata_kuliah || null, pertemuan || null, materi || null, id]
     );
     await conn.end();
 
@@ -88,6 +93,7 @@ export async function PUT(req) {
     });
   }
 }
+
 
 // 🔹 DELETE hapus modul
 export async function DELETE(req) {

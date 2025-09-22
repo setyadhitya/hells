@@ -4,27 +4,33 @@ import { useState, useEffect } from "react";
 
 export default function ModulClient({ user }) {
   const [list, setList] = useState([]);
-  const [form, setForm] = useState({ judul: "", deskripsi: "" });
+  const [form, setForm] = useState({ mata_kuliah: "", pertemuan: "", materi: "" });
   const [editId, setEditId] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [mataKuliahList, setMataKuliahList] = useState([]);
 
-  // 🔹 Ambil data modul dari API
+  // 🔹 Ambil data modul
   const loadData = async () => {
-    const res = await fetch("/api/admin/modul", {
-      cache: "no-store",
-    });
+    const res = await fetch("/api/admin/modul", { cache: "no-store" });
     const data = await res.json();
     setList(data);
   };
 
+  // 🔹 Ambil daftar mata kuliah
+  const loadMataKuliah = async () => {
+    const res = await fetch("/api/admin/matakuliah", { cache: "no-store" });
+    const data = await res.json();
+    setMataKuliahList(data);
+  };
+
   useEffect(() => {
     loadData();
+    loadMataKuliah();
   }, []);
 
   // 🔹 Save (Tambah / Update)
   const save = async (e) => {
     e.preventDefault();
-
     const method = editId ? "PUT" : "POST";
     const body = editId ? { ...form, id: editId } : form;
 
@@ -45,15 +51,11 @@ export default function ModulClient({ user }) {
   };
 
   // 🔹 Delete
-  // 🔹 Delete
   const del = async (id) => {
     if (!confirm("Hapus modul ini?")) return;
-    const res = await fetch(`/api/admin/modul?id=${id}`, {
-      method: "DELETE",
-    });
+    const res = await fetch(`/api/admin/modul?id=${id}`, { method: "DELETE" });
     if (res.ok) loadData();
   };
-
 
   // 🔹 Buka modal
   const openModal = (m = null) => {
@@ -62,7 +64,7 @@ export default function ModulClient({ user }) {
       setForm(m);
     } else {
       setEditId(null);
-      setForm({ judul: "", deskripsi: "" });
+      setForm({ mata_kuliah: "", pertemuan: "", materi: "" });
     }
     setShowModal(true);
   };
@@ -84,9 +86,10 @@ export default function ModulClient({ user }) {
         <table className="min-w-full border border-gray-300">
           <thead className="bg-gray-100">
             <tr>
-              <th className="border px-3 py-2">ID</th>
-              <th className="border px-3 py-2">Judul</th>
-              <th className="border px-3 py-2">Deskripsi</th>
+              <th className="border px-3 py-2">No</th>
+              <th className="border px-3 py-2">Mata Kuliah</th>
+              <th className="border px-3 py-2">Pertemuan</th>
+              <th className="border px-3 py-2">Materi</th>
               <th className="border px-3 py-2">Aksi</th>
             </tr>
           </thead>
@@ -94,8 +97,9 @@ export default function ModulClient({ user }) {
             {list.map((m) => (
               <tr key={m.id} className="hover:bg-gray-50">
                 <td className="border px-3 py-1">{m.id}</td>
-                <td className="border px-3 py-1">{m.judul}</td>
-                <td className="border px-3 py-1">{m.deskripsi}</td>
+                <td className="border px-3 py-1">{m.mata_kuliah}</td>
+                <td className="border px-3 py-1">{m.pertemuan}</td>
+                <td className="border px-3 py-1">{m.materi}</td>
                 <td className="border px-3 py-1 space-x-1">
                   {(user.role === "admin" || user.role === "laboran") && (
                     <>
@@ -137,22 +141,42 @@ export default function ModulClient({ user }) {
             </h3>
 
             <div className="space-y-2">
-              {/* Judul */}
-              <input
-                placeholder="Judul Modul"
-                value={form.judul}
-                onChange={(e) => setForm({ ...form, judul: e.target.value })}
+              {/* Dropdown Mata Kuliah */}
+              <select
+                value={form.mata_kuliah}
+                onChange={(e) => setForm({ ...form, mata_kuliah: e.target.value })}
                 className="w-full border px-3 py-2 rounded"
                 required
-              />
+              >
+                <option value="">-- Pilih Mata Kuliah --</option>
+                {mataKuliahList.map((mk, i) => (
+                  <option key={i} value={mk.Mata_Kuliah}>
+                    {mk.Mata_Kuliah}
+                  </option>
+                ))}
+              </select>
 
-              {/* Deskripsi */}
-              <textarea
-                placeholder="Deskripsi Modul"
-                value={form.deskripsi}
-                onChange={(e) => setForm({ ...form, deskripsi: e.target.value })}
+              {/* Dropdown Pertemuan */}
+              <select
+                value={form.pertemuan}
+                onChange={(e) => setForm({ ...form, pertemuan: e.target.value })}
                 className="w-full border px-3 py-2 rounded"
-                rows={4}
+                required
+              >
+                <option value="">-- Pilih Pertemuan --</option>
+                {Array.from({ length: 10 }, (_, i) => (
+                  <option key={i + 1} value={`Pertemuan ${i + 1}`}>
+                    Pertemuan {i + 1}
+                  </option>
+                ))}
+              </select>
+
+              {/* Materi */}
+              <input
+                placeholder="Materi"
+                value={form.materi}
+                onChange={(e) => setForm({ ...form, materi: e.target.value })}
+                className="w-full border px-3 py-2 rounded"
                 required
               />
             </div>
