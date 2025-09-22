@@ -22,8 +22,8 @@ export default function DashboardClient({ user }) {
         <Link href="/regler-admin-pengaturan/register" className="underline">Register</Link>
         <Link href="/regler-admin-pengaturan/dashboard" className="underline">Dashboard</Link>
         <Link href="/regler-admin-pengaturan/praktikum" className="underline">Praktikum</Link>
-        <Link href="/regler-admin-pengaturan/presensi" className="underline">Presensi</Link>
         <Link href="/regler-admin-pengaturan/modul" className="underline">Modul</Link>
+        <Link href="/regler-admin-pengaturan/isimodul" className="underline">Isi Modul</Link>
         <Link href="/regler-admin-pengaturan/peminjaman" className="underline">Peminjaman</Link>
         <Link href="/regler-admin-pengaturan/kalender" className="underline">Kalender</Link>
         <Link href="/regler-admin-pengaturan/akun" className="underline">Akun</Link>
