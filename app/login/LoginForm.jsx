@@ -77,7 +77,7 @@ export default function LoginForm() {
         <p className="text-sm text-gray-500 mt-2">
           Belum punya akun?{" "}
           <a
-            href="/pendaftaran/buat_akun"
+            href="/pendaftaran"
             className="text-blue-600 hover:underline"
           >
             Daftar sekarang

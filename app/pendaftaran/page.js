@@ -1,67 +1,101 @@
-'use client'
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+"use client";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 
-export default function LoginPage() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
-  const router = useRouter()
+export default function PendaftaranPage() {
+  const [username, setUsername] = useState("");
+  const [nama, setNama] = useState("");
+  const [nim, setNim] = useState("");
+  const [nomorhp, setNomorhp] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const router = useRouter();
 
-  const handleLogin = async (e) => {
-    e.preventDefault()
-    setError('')
+  const handleRequest = async (e) => {
+    e.preventDefault();
+    setError("");
+    setSuccess("");
 
     try {
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
-      })
-      const data = await res.json()
+      const res = await fetch("/api/pendaftaran", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, nama, nim, nomorhp, password }),
+      });
 
-      if (res.ok && data.token) {
-        localStorage.setItem('token', data.token) // simpan token di localStorage
-        router.push('/pendaftaran/form')
+      const data = await res.json();
+
+      if (res.ok) {
+        setSuccess(data.message);
+        setTimeout(() => router.push("/"), 2000); // kembali ke home
       } else {
-        setError(data.error || 'Login gagal')
+        setError(data.error || "Request akun gagal");
       }
     } catch (err) {
-      setError('Gagal login, coba lagi')
+      setError("Terjadi kesalahan server");
     }
-  }
+  };
 
   return (
     <main className="min-h-screen flex items-center justify-center bg-gray-100">
-      <form onSubmit={handleLogin} className="bg-white p-6 rounded shadow-md w-80 flex flex-col gap-4">
-        <h1 className="text-xl font-bold text-gray-700">Login</h1>
+      <form
+        onSubmit={handleRequest}
+        className="bg-white p-6 rounded shadow-md w-96 flex flex-col gap-4"
+      >
+        <h1 className="text-xl font-bold text-gray-700">Request Akun Praktikan</h1>
 
         {error && <p className="text-red-600">{error}</p>}
+        {success && <p className="text-green-600">{success}</p>}
 
         <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={e => setEmail(e.target.value)}
+          type="text"
+          placeholder="Username"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
           className="border p-2 rounded"
           required
-        />       
-         <input
+        />
+        <input
+          type="text"
+          placeholder="Nama Lengkap"
+          value={nama}
+          onChange={(e) => setNama(e.target.value)}
+          className="border p-2 rounded"
+          required
+        />
+        <input
+          type="text"
+          placeholder="NIM"
+          value={nim}
+          onChange={(e) => setNim(e.target.value)}
+          className="border p-2 rounded"
+          required
+        />
+        <input
+          type="text"
+          placeholder="Nomor HP"
+          value={nomorhp}
+          onChange={(e) => setNomorhp(e.target.value)}
+          className="border p-2 rounded"
+          required
+        />
+        <input
           type="password"
           placeholder="Password"
           value={password}
-          onChange={e => setPassword(e.target.value)}
+          onChange={(e) => setPassword(e.target.value)}
           className="border p-2 rounded"
           required
         />
 
-        <button type="submit" className="bg-blue-600 text-white p-2 rounded hover:bg-blue-700 transition">Login</button>
-
-        <p className="text-sm text-gray-500 mt-2">
-          Belum punya akun?{' '}
-          <a href="/pendaftaran/buat_akun" className="text-blue-600 hover:underline">Daftar sekarang</a>
-        </p>
+        <button
+          type="submit"
+          className="bg-green-600 text-white p-2 rounded hover:bg-green-700 transition"
+        >
+          Request Akun
+        </button>
       </form>
     </main>
-  )
+  );
 }

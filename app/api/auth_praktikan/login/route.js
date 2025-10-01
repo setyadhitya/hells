@@ -15,7 +15,7 @@ export async function POST(req) {
         );
 
         if (rows.length === 0) {
-            return NextResponse.json({ error: "Akun praktikan tidak ditemukan" }, { status: 401 });
+            return NextResponse.json({ error: "Akun praktikan tidak ditemukan atau belum di approve" }, { status: 401 });
         }
 
         const user = rows[0];

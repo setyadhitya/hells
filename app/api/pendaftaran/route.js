@@ -1,28 +1,9 @@
-import fs from "fs";
-import path from "path";
 import mysql from "mysql2/promise";
+import bcrypt from "bcrypt";
 
 export async function POST(req) {
   try {
-    const formData = await req.formData();
-
-    const user_id = formData.get("user_id");
-    const mataKuliahIDs = formData.getAll("Mata_Kuliah[]");
-
-    const uploadDir = path.join(process.cwd(), "public/uploads/pendaftaran");
-    if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
-
-    const saveFile = async (file) => {
-      if (!file) return null;
-      const buffer = Buffer.from(await file.arrayBuffer());
-      const filePath = path.join(uploadDir, file.name);
-      fs.writeFileSync(filePath, buffer);
-      return `/uploads/pendaftaran/${file.name}`;
-    };
-
-    const ktmPath = await saveFile(formData.get("ktm"));
-    const fotoPath = await saveFile(formData.get("foto"));
-    const krsPath = await saveFile(formData.get("krs"));
+    const { username, nama, nim, nomorhp, password } = await req.json();
 
     const connection = await mysql.createConnection({
       host: "localhost",
@@ -31,37 +12,67 @@ export async function POST(req) {
       database: "stern",
     });
 
-    // ✅ cek apakah user sudah mendaftar
-    const [cek] = await connection.execute(
-      `SELECT COUNT(*) as total FROM tb_pendaftaran WHERE user_id = ?`,
-      [user_id]
+    // 🔹 Cek apakah username sudah dipakai
+    const [cekUser] = await connection.execute(
+      "SELECT * FROM tb_pendaftaran_akun WHERE username = ?",
+      [username]
     );
-
-    if (cek[0].total > 0) {
+    if (cekUser.length > 0) {
       await connection.end();
       return new Response(
-        JSON.stringify({ error: "Anda sudah mendaftar sebelumnya" }),
+        JSON.stringify({ error: "Username sudah terdaftar" }),
         { status: 400 }
       );
     }
 
-    // insert pendaftaran baru
-    for (let matkulID of mataKuliahIDs) {
-      await connection.execute(
-        `INSERT INTO tb_pendaftaran (user_id, Mata_Kuliah_ID, ktm, foto, krs) VALUES (?, ?, ?, ?, ?)`,
-        [user_id, matkulID, ktmPath, fotoPath, krsPath]
+    // 🔹 Cek apakah nama sudah dipakai
+    const [cekNama] = await connection.execute(
+      "SELECT * FROM tb_pendaftaran_akun WHERE nama = ?",
+      [nama]
+    );
+    if (cekNama.length > 0) {
+      await connection.end();
+      return new Response(
+        JSON.stringify({ error: "Nama sudah terdaftar" }),
+        { status: 400 }
       );
     }
 
-    await connection.end();
+    // 🔹 Cek apakah NIM sudah dipakai
+    const [cekNim] = await connection.execute(
+      "SELECT * FROM tb_pendaftaran_akun WHERE nim = ?",
+      [nim]
+    );
+    if (cekNim.length > 0) {
+      await connection.end();
+      return new Response(
+        JSON.stringify({ error: "NIM sudah terdaftar" }),
+        { status: 400 }
+      );
+    }
 
-    return new Response(JSON.stringify({ message: "Pendaftaran berhasil!" }), {
-      status: 200,
-    });
+    // 🔹 Hash password sebelum simpan
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // 🔹 Insert akun baru dengan status waiting
+    await connection.execute(
+      "INSERT INTO tb_pendaftaran_akun (username, nama, nim, nomorhp, password, status) VALUES (?, ?, ?, ?, ?, 'waiting')",
+      [username, nama, nim, nomorhp, hashedPassword]
+    );
+
+    await connection.end();
+    return new Response(
+      JSON.stringify({
+        message:
+          "Request akun terkirim, silahkan menunggu 1x24 jam untuk approve akun.",
+      }),
+      { status: 200 }
+    );
   } catch (err) {
     console.error(err);
-    return new Response(JSON.stringify({ error: "Gagal mendaftar" }), {
-      status: 500,
-    });
+    return new Response(
+      JSON.stringify({ error: "Gagal mengajukan request akun" }),
+      { status: 500 }
+    );
   }
 }
