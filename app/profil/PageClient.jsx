@@ -1,39 +1,84 @@
 "use client"
-import Link from "next/link"
-import { useRouter, usePathname } from "next/navigation"
+import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
+import Link from "next/link"        // ✅ harus diimport
 
 export default function PageClient({ user }) {
   const router = useRouter()
-  const pathname = usePathname()
+  const [praktikan, setPraktikan] = useState(null)
+  const [loading, setLoading] = useState(true)
+
+  // Ambil data praktikan dari API
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await fetch("/api/praktikan")
+        if (res.ok) {
+          const data = await res.json()
+          setPraktikan(data)
+        }
+      } catch (err) {
+        console.error(err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchData()
+  }, [])
 
   const handleLogout = async () => {
-    await fetch("/api/auth/logout", {
-      method: "POST",
-    })
+    await fetch("/api/auth/logout", { method: "POST" })
     router.push("/")
   }
 
-  // 🔹 Tentukan judul halaman secara dinamis
-  let pageTitle = "Halaman"
-  if (pathname.startsWith("/dashboard")) {
-    pageTitle = "Dashboard"
-  } else if (pathname.startsWith("/profil")) {
-    pageTitle = "Profil Mahasiswa"
-  }
+  if (loading) return <p className="text-center py-10">Loading...</p>
+  if (!praktikan) return <p className="text-center py-10 text-red-600">Data praktikan tidak ditemukan</p>
 
   return (
-    <main className="max-w-xl mx-auto py-10">
-      <h1 className="text-2xl font-bold">{pageTitle}</h1>
-      <p className="mt-2 text-gray-700">
-        Halo: {user.username} — role: {user.role}
-      </p>
-      
-      <button
-        onClick={handleLogout}
-        className="mt-6 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
-      >
-        Logout
-      </button>
+    <main className="max-w-4xl mx-auto py-10 px-6">
+      {/* Header Profil */}
+      <div className="bg-white shadow rounded-lg p-6 mb-6">
+        <h1 className="text-2xl font-bold text-gray-800">Profil Mahasiswa</h1>
+        <p className="mt-2 text-gray-600">Halo, {praktikan.nama} ({praktikan.username})</p>
+        <p className="text-gray-500 text-sm">NIM: {praktikan.nim} | No. HP: {praktikan.nomorhp}</p>
+        <p className={`mt-2 font-semibold ${praktikan.status === "aktif" ? "text-green-600" : "text-red-600"}`}>
+          Status: {praktikan.status}
+        </p>
+      </div>
+
+      {/* Menu hanya jika status aktif */}
+      {praktikan.status === "aktif" ? (
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          <Link 
+  href="/presensi" 
+  className="p-4 bg-blue-100 rounded-xl shadow hover:bg-blue-200 transition block text-center"
+>
+  Presensi
+</Link>
+          <button className="p-4 bg-yellow-100 rounded-xl shadow hover:bg-yellow-200 transition">
+            Kumpulkan Tugas
+          </button>
+          <button className="p-4 bg-green-100 rounded-xl shadow hover:bg-green-200 transition">
+            Aktivitas
+          </button>
+          <button className="p-4 bg-purple-100 rounded-xl shadow hover:bg-purple-200 transition">
+            Pengumuman
+          </button>
+          <button className="p-4 bg-orange-100 rounded-xl shadow hover:bg-orange-200 transition">
+            Akun
+          </button>
+          <button
+            onClick={handleLogout}
+            className="p-4 bg-red-500 text-white font-semibold rounded-xl shadow hover:bg-red-600 transition"
+          >
+            Logout
+          </button>
+        </div>
+      ) : (
+        <div className="text-center text-red-600 font-semibold">
+          Akun belum aktif. Silakan hubungi admin/laboran.
+        </div>
+      )}
     </main>
   )
 }

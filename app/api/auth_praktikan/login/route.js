@@ -28,7 +28,7 @@ export async function POST(req) {
 
         // Buat token
         const token = await signToken({
-            id: user.id,
+            praktikan_id: user.praktikan_id, //cek ini ya, cek ini yaa
             username: user.username,
             role: user.role || "praktikan",
         });
