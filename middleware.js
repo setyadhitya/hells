@@ -49,7 +49,7 @@ console.log("DEBUG middleware user.role:", user?.role)
 
     // Kalau role BUKAN praktikan → lempar ke dashboard
     if (user.role !== "praktikan") {
-      return NextResponse.redirect(new URL("/dashboard", req.url))
+      return NextResponse.redirect(new URL("/regler-admin-pengaturan/dashboard", req.url))
     }
   }
 
