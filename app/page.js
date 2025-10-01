@@ -3,7 +3,7 @@
 
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { Calendar, BookOpen, Users, ClipboardList, LayoutDashboard, FileText } from "lucide-react"
+import { AirVent , BookOpen, Users, ClipboardList, LayoutDashboard, FileText } from "lucide-react"
 
 export default function Home() {
   const navItems = [
@@ -11,7 +11,7 @@ export default function Home() {
     { name: 'Presensi Praktikum', href: '/presensi', icon: ClipboardList },
     { name: 'Modul Praktikum', href: '/modul', icon: BookOpen },
     { name: 'Peminjaman Lab', href: '/peminjaman', icon: Users },
-    { name: 'Calendar', href: '/calendar', icon: Calendar },
+    { name: 'Profil Assisten', href: '/profil-assisten', icon: AirVent },
     { name: 'Akun Mahasiswa', href: '/login', icon: FileText },
   ]
 
