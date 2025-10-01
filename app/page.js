@@ -11,7 +11,7 @@ export default function Home() {
     { name: 'Presensi Praktikum', href: '/presensi', icon: ClipboardList },
     { name: 'Modul Praktikum', href: '/modul', icon: BookOpen },
     { name: 'Peminjaman Lab', href: '/peminjaman', icon: Users },
-    { name: 'Profil Assisten', href: '/profil-assisten', icon: AirVent },
+    { name: 'Akun Assisten', href: '/akun-assisten', icon: AirVent },
     { name: 'Akun Mahasiswa', href: '/login', icon: FileText },
   ]
 
