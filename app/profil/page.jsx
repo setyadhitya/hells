@@ -11,7 +11,7 @@ export default async function Profil() {
 
   // 🔹 Kalau belum login → redirect ke login admin
   if (!user) {
-    redirect("/regler-admin-pengaturan/login");
+    return NextResponse.redirect(new URL("/login", req.url))
   }
 
   // 🔹 Kalau role bukan praktikan → redirect ke dashboard

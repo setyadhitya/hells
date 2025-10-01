@@ -10,7 +10,7 @@ export default function PageClient({ user }) {
     await fetch("/api/auth/logout", {
       method: "POST",
     })
-    router.push("/regler-admin-pengaturan/login")
+    router.push("/")
   }
 
   // 🔹 Tentukan judul halaman secara dinamis
@@ -27,11 +27,7 @@ export default function PageClient({ user }) {
       <p className="mt-2 text-gray-700">
         Halo: {user.username} — role: {user.role}
       </p>
-
-      <div className="mt-4 space-x-4">
-        <Link href="#" className="underline">Register</Link>
-      </div>
-
+      
       <button
         onClick={handleLogout}
         className="mt-6 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"

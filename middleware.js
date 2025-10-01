@@ -44,7 +44,7 @@ console.log("DEBUG middleware user.role:", user?.role)
   if (pathname.startsWith("/profil")) {
     // Kalau belum login → lempar ke login
     if (!user) {
-      return NextResponse.redirect(new URL("/regler-admin-pengaturan/login", req.url))
+      return NextResponse.redirect(new URL("/login", req.url))
     }
 
     // Kalau role BUKAN praktikan → lempar ke dashboard
