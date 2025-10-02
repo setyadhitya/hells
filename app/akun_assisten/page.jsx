@@ -1,22 +1,22 @@
-// app/profil/page.jsx
+// app/akun-assisten/page.jsx
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { verifyToken } from "../../lib/auth";
-import PageClient from "./PageClient";
+import { verifyToken } from "../../lib/auth.js";
+import PageClient from "./PageCLient.jsx";
 
-export default async function Profil() {
+export default async function AkunAssisten() {
   const cookieStore = await cookies();
   const token = cookieStore.get("token")?.value || null;
   const user = token ? await verifyToken(token) : null;
 
   // 🔹 Kalau belum login → redirect ke login admin
   if (!user) {
-    return NextResponse.redirect(new URL("/login-assisten", req.url))
+    redirect("/login_assisten");
   }
 
-  // 🔹 Kalau role bukan praktikan → redirect ke dashboard
-  if (user.role !== "praktikan") {
-    redirect("/regler-admin-pengaturan/dashboard");
+  // 🔹 Kalau role bukan assisten → redirect ke halaman localhost:3000
+  if (user.role !== "assisten") {
+    redirect("/");
   }
 
   // ✅ Kalau lolos semua → render client page

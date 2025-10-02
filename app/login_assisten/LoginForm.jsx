@@ -24,8 +24,8 @@ export default function LoginForm() {
       const data = await res.json();
 
       if (res.ok) {
-        // Jika sukses, redirect ke /akun-assisten
-        router.push("/akun-assisten");
+        // Jika sukses, redirect ke /akun_assisten
+        router.push("/akun_assisten");
       } else {
         setError(data.error || "Login gagal");
       }
@@ -40,7 +40,7 @@ export default function LoginForm() {
         onSubmit={handleLogin}
         className="bg-white p-6 rounded shadow-md w-80 flex flex-col gap-4"
       >
-        <h1 className="text-xl font-bold text-gray-700">Login Praktikan</h1>
+        <h1 className="text-xl font-bold text-gray-700">Login Assisten</h1>
 
         {/* Pesan error */}
         {error && <p className="text-red-600">{error}</p>}

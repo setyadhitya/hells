@@ -1,4 +1,4 @@
-// app/login/page.jsx
+// app/login_assisten/page.jsx
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { verifyToken } from "../../lib/auth"; // fungsi verifikasi JWT/token
