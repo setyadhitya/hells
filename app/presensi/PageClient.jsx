@@ -12,27 +12,42 @@ export default function PageClient({ user }) {
     setLoading(true);
 
     try {
-const res = await fetch("/api/presensi", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({
-    kode,
-    user, // kirim user lengkap dari token
-  }),
-});
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          async (pos) => {
+            const lokasi = `${pos.coords.latitude},${pos.coords.longitude}`;
 
+            const res = await fetch("/api/presensi", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                kode,
+                lokasi, // kirim lokasi GPS
+                user,   // user dari token
+              }),
+            });
 
-      const data = await res.json();
-      if (res.ok) {
-        setMessage(`✅ ${data.message}`);
+            const data = await res.json();
+            if (res.ok) {
+              setMessage(`✅ ${data.message}`);
+            } else {
+              setMessage(`❌ ${data.error}`);
+            }
+            setLoading(false);
+          },
+          (err) => {
+            setMessage("❌ Gagal ambil lokasi: " + err.message);
+            setLoading(false);
+          }
+        );
       } else {
-        setMessage(`❌ ${data.error}`);
+        setMessage("❌ Browser tidak mendukung GPS");
+        setLoading(false);
       }
     } catch (err) {
       setMessage("❌ Terjadi kesalahan server");
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   return (
@@ -53,7 +68,7 @@ const res = await fetch("/api/presensi", {
           disabled={loading}
           className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 disabled:opacity-50"
         >
-          {loading ? "Memproses..." : "Submit Presensi"}
+          {loading ? "Mengirim..." : "Submit Presensi"}
         </button>
       </form>
 

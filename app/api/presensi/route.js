@@ -4,7 +4,7 @@ import { verifyToken } from "../../../lib/auth";
 export async function POST(req) {
   let connection;
   try {
-    // Ambil cookie token dari header
+    // === 1. Ambil token dari cookie ===
     const cookieHeader = req.headers.get("cookie") || "";
     const cookies = Object.fromEntries(
       cookieHeader.split("; ").map((c) => {
@@ -15,37 +15,23 @@ export async function POST(req) {
     const token = cookies.token;
 
     if (!token) {
-      console.log("DEBUG: Token tidak ditemukan di cookie");
-      return new Response(
-        JSON.stringify({ error: "Token tidak ditemukan. Harap login" }),
-        { status: 401 }
-      );
+      return new Response(JSON.stringify({ error: "Token tidak ditemukan, login dulu" }), { status: 401 });
     }
 
-    // Verifikasi token
+    // === 2. Verifikasi token ===
     const user = await verifyToken(token);
-    console.log("DEBUG: user dari token =", user);
-
     if (!user || user.role !== "praktikan") {
-      console.log("DEBUG: User tidak valid atau bukan praktikan");
-      return new Response(
-        JSON.stringify({ error: "User tidak valid / bukan praktikan" }),
-        { status: 401 }
-      );
+      return new Response(JSON.stringify({ error: "User tidak valid / bukan praktikan" }), { status: 401 });
     }
 
-    // Ambil kode presensi dari body
-    const { kode } = await req.json();
+    // === 3. Ambil kode presensi dan lokasi dari body ===
+    const { kode, lokasi } = await req.json();
     if (!kode) {
-      console.log("DEBUG: Kode presensi kosong");
-      return new Response(
-        JSON.stringify({ error: "Kode presensi harus diisi" }),
-        { status: 400 }
-      );
+      return new Response(JSON.stringify({ error: "Kode presensi wajib diisi" }), { status: 400 });
     }
-    console.log(`DEBUG: Kode diterima = ${kode}`);
+    const lokasiFinal = lokasi || "lokasi_default"; // fallback kalau GPS gagal
 
-    // Connect ke DB
+    // === 4. Connect ke DB ===
     connection = await mysql.createConnection({
       host: "localhost",
       user: "root",
@@ -53,91 +39,70 @@ export async function POST(req) {
       database: "stern",
     });
 
-    // 1. Cek kode presensi aktif
+    // === 5. Cek kode presensi aktif ===
     const [kodeRows] = await connection.execute(
       "SELECT * FROM tb_kode_presensi WHERE kode = ? AND status = 'aktif'",
       [kode]
     );
     if (kodeRows.length === 0) {
-      console.log("DEBUG: Kode presensi tidak valid atau tidak aktif");
-      return new Response(
-        JSON.stringify({ error: "Kode presensi tidak valid / tidak aktif" }),
-        { status: 400 }
-      );
+      return new Response(JSON.stringify({ error: "Kode presensi tidak valid / sudah tidak aktif" }), { status: 400 });
     }
     const kodeData = kodeRows[0];
+
     const mata_kuliah_id = kodeData.mata_kuliah_id;
-    console.log("DEBUG: Kode valid, mata_kuliah_id =", mata_kuliah_id);
+    const pertemuan_ke = kodeData.pertemuan_ke;
+    const assiten_id = kodeData.generated_by_assisten_id;
+    const kode_id = kodeData.id;
 
-    // 2. Cari praktikan dari NIM di token
-    const nim = user.nim; // pastikan verifyToken mengembalikan NIM
-    if (!nim) {
-      console.log("DEBUG: User token tidak memiliki NIM");
-      return new Response(
-        JSON.stringify({ error: "User tidak memiliki NIM" }),
-        { status: 400 }
-      );
-    }
-
+    // === 6. Ambil data praktikan dari NIM di token ===
     const [praktikanRows] = await connection.execute(
       "SELECT * FROM tb_praktikan WHERE nim = ?",
-      [nim]
+      [user.nim]
     );
     if (praktikanRows.length === 0) {
-      console.log("DEBUG: Praktikan tidak ditemukan di DB, NIM =", nim);
-      return new Response(
-        JSON.stringify({ error: "Praktikan tidak ditemukan di DB" }),
-        { status: 400 }
-      );
+      return new Response(JSON.stringify({ error: "Praktikan tidak ditemukan di database" }), { status: 400 });
     }
+    const praktikan_id = praktikanRows[0].id;
 
-    const praktikan_id = praktikanRows[0].id; // ID dari tb_praktikan
-    console.log("DEBUG: Praktikan ditemukan, id =", praktikan_id);
-
-    // 3. Cek apakah praktikan terdaftar di mata kuliah
+    // === 7. Cek apakah praktikan terdaftar pada matakuliah ini (pakai tb_peserta) ===
     const [pesertaRows] = await connection.execute(
-      "SELECT * FROM tb_matakuliah_praktikan WHERE mata_kuliah_id = ? AND praktikan_id = ?",
+      "SELECT * FROM tb_peserta WHERE mata_kuliah_id = ? AND praktikan_id = ?",
       [mata_kuliah_id, praktikan_id]
     );
     if (pesertaRows.length === 0) {
-      console.log("DEBUG: Praktikan tidak terdaftar di mata kuliah");
-      return new Response(
-        JSON.stringify({ error: "Anda tidak terdaftar pada mata kuliah ini" }),
-        { status: 400 }
-      );
+      return new Response(JSON.stringify({ error: "Anda tidak terdaftar pada mata kuliah ini" }), { status: 400 });
     }
 
-    // 4. Cek duplicate presensi
+    // === 8. Cek duplicate presensi ===
     const [presensiRows] = await connection.execute(
-      "SELECT * FROM tb_presensi WHERE praktikan_id = ? AND kode_id = ?",
-      [praktikan_id, kodeData.id]
+      "SELECT * FROM tb_presensi WHERE praktikan_id = ? AND mata_kuliah_id = ? AND pertemuan_ke = ?",
+      [praktikan_id, mata_kuliah_id, pertemuan_ke]
     );
     if (presensiRows.length > 0) {
-      console.log("DEBUG: Duplicate presensi ditemukan");
-      return new Response(
-        JSON.stringify({ error: "Anda sudah melakukan presensi untuk kode ini" }),
-        { status: 400 }
-      );
+      return new Response(JSON.stringify({ error: "Anda sudah presensi pada pertemuan ini" }), { status: 400 });
     }
 
-    // 5. Simpan presensi
+    // === 9. Simpan presensi ===
     await connection.execute(
-      "INSERT INTO tb_presensi (praktikan_id, mata_kuliah_id, kode_id, status) VALUES (?, ?, ?, ?)",
-      [praktikan_id, mata_kuliah_id, kodeData.id, "aktif"]
+      `INSERT INTO tb_presensi 
+        (praktikan_id, mata_kuliah_id, kode_id, pertemuan_ke, status, lokasi, assisten_id, created_at) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, NOW())`,
+      [
+        praktikan_id,
+        mata_kuliah_id,
+        kode_id,
+        pertemuan_ke,
+        "hadir",
+        lokasiFinal,   // <-- GPS masuk sini
+        assiten_id,
+      ]
     );
 
-    console.log(`DEBUG: Presensi berhasil untuk praktikan_id=${praktikan_id}, kode=${kode}`);
-    return new Response(
-      JSON.stringify({ message: "Presensi berhasil disimpan" }),
-      { status: 200 }
-    );
+    return new Response(JSON.stringify({ message: "Presensi berhasil disimpan" }), { status: 200 });
 
   } catch (err) {
     console.error("Error API presensi:", err);
-    return new Response(
-      JSON.stringify({ error: "Gagal melakukan presensi" }),
-      { status: 500 }
-    );
+    return new Response(JSON.stringify({ error: "Gagal melakukan presensi" }), { status: 500 });
   } finally {
     if (connection) await connection.end();
   }

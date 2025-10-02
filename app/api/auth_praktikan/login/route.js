@@ -10,7 +10,7 @@ export async function POST(req) {
 
         // Cari user praktikan berdasarkan username
         const [rows] = await db.query(
-            "SELECT * FROM tb_users WHERE username = ? AND role = 'praktikan'",
+            "SELECT * FROM tb_praktikan WHERE username = ? AND role = 'praktikan'",
             [username] // ⚠️ username sebenarnya disimpan di kolom username
         );
 
@@ -28,21 +28,22 @@ export async function POST(req) {
 
         // Buat token
         const token = await signToken({
-            praktikan_id: user.praktikan_id, //cek ini ya, cek ini yaa
-            username: user.username,
-            role: user.role || "praktikan",
-        });
+    praktikan_id: user.praktikan_id,
+    username: user.username,
+    nim: user.nim,
+    role: user.role || "praktikan",
+});
 
-        // Response
-        const res = NextResponse.json({
-            message: "Login berhasil",
-            token, // praktikan butuh simpan di localStorage
-            user: {
-                id: user.id,
-                username: user.username,
-                role: user.role,
-            },
-        });
+const res = NextResponse.json({
+    message: "Login berhasil",
+    token,
+    user: {
+        praktikan_id: user.praktikan_id,
+        username: user.username,
+        nim: user.nim,
+        role: user.role,
+    },
+});
 
 
         // simpan juga ke cookie
