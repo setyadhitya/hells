@@ -11,10 +11,11 @@ export async function middleware(req) {
   console.log("DEBUG middleware pathname:", pathname)
   console.log("DEBUG middleware user.role:", user?.role)
 
-  // Daftar halaman protected
+  // Daftar halaman protected jika belum login
   const protectedRoutes = [
     "/regler-admin-pengaturan/dashboard",
     "/regler-admin-pengaturan/rekap",
+    "/regler-admin-pengaturan/isimodul",
     "/dashboard",
     "/settings",
     "/profil"
