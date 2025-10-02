@@ -1,9 +1,12 @@
 "use client"
 import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 
 export default function LoginPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const redirectUrl = searchParams.get("redirect") || "/regler-admin-pengaturan/dashboard"
+
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
   const [message, setMessage] = useState("")
@@ -11,30 +14,19 @@ export default function LoginPage() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     try {
-      const res = await fetch("/api/auth/login", {
+      const res = await fetch("/api/auth/login?redirect=" + encodeURIComponent(redirectUrl), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
-        credentials: "include",   // ⬅️ supaya cookie token tersimpan
+        credentials: "include",
       })
 
       const data = await res.json()
 
       if (res.ok) {
         setMessage("Login berhasil, redirect...")
-
-        // simpan token ke localStorage (opsional)
-        localStorage.setItem("token", data.token)
-
-        // redirect sesuai role
         setTimeout(() => {
-          if (data.user?.role === "admin") {
-            router.push("/regler-admin-pengaturan/dashboard")
-          } else if (data.user?.role === "praktikan") {
-            router.push("/profil")
-          } else {
-            router.push("/") // fallback kalau role tidak dikenal
-          }
+          router.push(data.redirect) // ⬅️ langsung balik ke halaman terakhir
         }, 1000)
       } else {
         setMessage(data.error || "Login gagal")
