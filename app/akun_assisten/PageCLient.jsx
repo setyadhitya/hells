@@ -49,12 +49,12 @@ export default function PageClient({ user }) {
       {/* Menu hanya jika status aktif */}
       {assisten.status === "aktif" ? (
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          <Link 
-  href="/presensi" 
-  className="p-4 bg-blue-100 rounded-xl shadow hover:bg-blue-200 transition block text-center"
->
-  Presensi
-</Link>
+          <Link
+            href="/kode_presensi"
+            className="p-4 bg-blue-100 rounded-xl shadow hover:bg-blue-200 transition block text-center"
+          >
+            Buat Kode Presensi
+          </Link>
           <button className="p-4 bg-yellow-100 rounded-xl shadow hover:bg-yellow-200 transition">
             Kumpulkan Tugas
           </button>

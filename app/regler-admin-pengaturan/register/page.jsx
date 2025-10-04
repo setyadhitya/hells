@@ -1,5 +1,5 @@
 import { cookies } from "next/headers"
-import { verifyToken } from "../../lib/auth"
+import { verifyToken } from "../../../lib/auth"
 import RegisterClient from "./RegisterClient" // Client Component
 import Link from "next/link"
 

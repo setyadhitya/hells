@@ -27,6 +27,7 @@ export default function DashboardClient({ user }) {
         <Link href="/regler-admin-pengaturan/peminjaman" className="underline">Peminjaman</Link>
         <Link href="/regler-admin-pengaturan/kalender" className="underline">Kalender</Link>
         <Link href="/regler-admin-pengaturan/akun" className="underline">Akun</Link>
+        <Link href="/regler-admin-pengaturan/rekap" className="underline">Rekap Presensi</Link>
       </div>
       <button
         onClick={handleLogout}
