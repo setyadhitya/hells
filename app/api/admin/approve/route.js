@@ -36,7 +36,7 @@ export async function POST(req) {
   try {
     await auth(req);
     const body = await req.json();
-    const { id, username, password } = body;
+    const { id, username, nama, nim, nomorhp, password } = body;
 
     const conn = await getConnection();
 
@@ -59,10 +59,10 @@ export async function POST(req) {
       [id]
     );
 
-    // masukkan ke tb_users (role = praktikan)
+    // masukkan ke tb_praktikan (role = praktikan)
     await conn.execute(
-      "INSERT INTO tb_users (username, password, role) VALUES (?,?,?)",
-      [username, password, "praktikan"]
+      "INSERT INTO tb_praktikan (username, nama, nim, nomorhp, password, role, status) VALUES (?,?,?,?,?,?,?)",
+      [username, nama, nim, nomorhp, password, "praktikan", "aktif"]
     );
 
     await conn.end();

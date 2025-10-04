@@ -16,7 +16,7 @@ export default function ApproveClient({ user }) {
   }, []);
 
   const approve = async (akun) => {
-    if (!confirm(`Anda yakin approve akun ${akun.username}?`)) return;
+    if (!confirm(`Anda yakin approve akun ${akun.nama}?`)) return;
 
     const res = await fetch("/api/admin/approve", {
       method: "POST",
@@ -25,6 +25,9 @@ export default function ApproveClient({ user }) {
         id: akun.id,
         username: akun.username,
         password: akun.password, // langsung pakai password hasil pendaftaran
+        nama: akun.nama,
+        nim: akun.nim,
+        nomorhp: akun.nomorhp,
       }),
     });
 
