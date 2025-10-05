@@ -64,7 +64,7 @@ export async function POST(req) {
     return new Response(
       JSON.stringify({
         message:
-          "Request akun terkirim, silahkan menunggu 1x24 jam untuk approve akun.",
+          "Request akun terkirim, silahkan menunggu 1x24 jam untuk approve akun. Gunakan username dan password yang sudah didaftarkan untuk login",
       }),
       { status: 200 }
     );

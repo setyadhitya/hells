@@ -49,12 +49,12 @@ export default function PageClient({ user }) {
       {/* Menu hanya jika status aktif */}
       {praktikan.status === "aktif" ? (
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          <Link 
-  href="/presensi" 
-  className="p-4 bg-blue-100 rounded-xl shadow hover:bg-blue-200 transition block text-center"
->
-  Presensi
-</Link>
+          <Link
+            href="/presensi"
+            className="p-4 bg-blue-100 rounded-xl shadow hover:bg-blue-200 transition block text-center"
+          >
+            Presensi
+          </Link>
           <button className="p-4 bg-yellow-100 rounded-xl shadow hover:bg-yellow-200 transition">
             Kumpulkan Tugas
           </button>
@@ -64,9 +64,12 @@ export default function PageClient({ user }) {
           <button className="p-4 bg-purple-100 rounded-xl shadow hover:bg-purple-200 transition">
             Pengumuman
           </button>
-          <button className="p-4 bg-orange-100 rounded-xl shadow hover:bg-orange-200 transition">
+          <Link
+            href="/profil/akun"
+            className="p-4 bg-orange-100 rounded-xl shadow hover:bg-orange-200 transition block text-center"
+          >
             Akun
-          </button>
+          </Link>
           <button
             onClick={handleLogout}
             className="p-4 bg-red-500 text-white font-semibold rounded-xl shadow hover:bg-red-600 transition"
