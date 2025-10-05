@@ -1,16 +1,19 @@
-import { NextResponse } from "next/server"
+// app/api/auth/logout/route.js
+import { NextResponse } from "next/server";
 
 export async function POST() {
-  const res = NextResponse.json({ message: "Logged out" })
+  const response = NextResponse.json({ message: "Logged out" });
 
-  // hapus cookie
-  res.cookies.set("token", "", {
+  // Hapus cookie 'token' dengan cara aman
+  response.cookies.set({
+    name: "token",
+    value: "",
+    path: "/",
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "strict",
-    maxAge: 0,
-    path: "/",
-  })
+    expires: new Date(0), // <- ini lebih aman daripada maxAge: 0
+  });
 
-  return res
+  return response;
 }

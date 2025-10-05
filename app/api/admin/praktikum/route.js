@@ -1,6 +1,8 @@
+// app/api/admin/praktikum/route.js
 import mysql from "mysql2/promise";
 import { verifyToken } from "../../../../lib/auth";
 
+// 🔹 Fungsi koneksi ke database
 async function getConnection() {
   return await mysql.createConnection({
     host: "localhost",
@@ -10,7 +12,7 @@ async function getConnection() {
   });
 }
 
-// 🔹 Middleware helper untuk cek token
+// 🔹 Middleware: validasi token dan user
 async function auth(req) {
   const token = req.cookies.get("token")?.value;
   if (!token) throw new Error("Unauthorized");
@@ -19,21 +21,24 @@ async function auth(req) {
   return user;
 }
 
-// 🔹 GET semua praktikum (hanya user login)
+// ==================== 🔹 GET ====================
 export async function GET(req) {
   try {
-    await auth(req); // cek token
+    await auth(req);
     const conn = await getConnection();
     const [rows] = await conn.execute("SELECT * FROM tb_praktikum");
     await conn.end();
     return Response.json(rows);
   } catch (err) {
     console.error("GET Error:", err);
-    return new Response(JSON.stringify({ error: err.message || "Unauthorized" }), { status: 401 });
+    return new Response(
+      JSON.stringify({ error: err.message || "Unauthorized" }),
+      { status: 401 }
+    );
   }
 }
 
-// 🔹 POST tambah praktikum (hanya admin/laboran)
+// ==================== 🔹 POST ====================
 export async function POST(req) {
   try {
     const user = await auth(req);
@@ -42,58 +47,62 @@ export async function POST(req) {
     }
 
     const body = await req.json();
-    const { Mata_Kuliah, Jurusan, Kelas, Semester, Hari, Jam_Mulai, Jam_Ahir, Shift, Assisten, Catatan, Tanggal_Mulai } = body;
+    const {
+      mata_kuliah, jurusan, kelas, semester,
+      hari, jam_mulai, jam_ahir, shift,
+      assisten, catatan
+    } = body;
 
     const conn = await getConnection();
 
-    // cek duplikasi praktikum
+    // Cek duplikasi praktikum
     const [duplikasi] = await conn.execute(
-      `SELECT ID FROM tb_praktikum WHERE Mata_Kuliah=? AND Kelas=?`,
-      [Mata_Kuliah, Kelas]
+      "SELECT id FROM tb_praktikum WHERE mata_kuliah=? AND kelas=?",
+      [mata_kuliah, kelas]
     );
     if (duplikasi.length > 0) {
       await conn.end();
-      return new Response(JSON.stringify({ error: `Praktikum ${Mata_Kuliah} untuk kelas ${Kelas} sudah ada` }), { status: 400 });
-    }
-
-    // cek bentrok shift
-    const [bentrok] = await conn.execute(
-      `SELECT ID FROM tb_praktikum WHERE Hari=? AND Shift=?`,
-      [Hari, Shift]
-    );
-    if (bentrok.length > 0) {
-      await conn.end();
-      return new Response(JSON.stringify({ error: `Sudah ada praktikum di hari ${Hari}, shift ${Shift}` }), { status: 400 });
-    }
-
-    const [result] = await conn.execute(
-      `INSERT INTO tb_praktikum (Mata_Kuliah, Jurusan, Kelas, Semester, Hari, Jam_Mulai, Jam_Ahir, Shift, Assisten, Catatan)
-       VALUES (?,?,?,?,?,?,?,?,?,?)`,
-      [Mata_Kuliah, Jurusan, Kelas, Semester, Hari, Jam_Mulai, Jam_Ahir, Shift, Assisten, Catatan]
-    );
-    const newId = result.insertId;
-
-    // generate 10 jadwal
-    let tanggalAwal = new Date(Tanggal_Mulai);
-    for (let i = 1; i <= 10; i++) {
-      let tanggal = new Date(tanggalAwal);
-      tanggal.setDate(tanggalAwal.getDate() + (i - 1) * 7);
-      await conn.execute(
-        `INSERT INTO tb_jadwal (ID_Praktikum, Tanggal, Pertemuan_ke, Catatan)
-         VALUES (?,?,?,NULL)`,
-        [newId, tanggal.toISOString().split("T")[0], i]
+      return new Response(
+        JSON.stringify({ error: `praktikum ${mata_kuliah} untuk kelas ${kelas} sudah ada` }),
+        { status: 400 }
       );
     }
 
+    // Cek bentrok shift
+    const [bentrok] = await conn.execute(
+      "SELECT id FROM tb_praktikum WHERE hari=? AND shift=?",
+      [hari, shift]
+    );
+    if (bentrok.length > 0) {
+      await conn.end();
+      return new Response(
+        JSON.stringify({ error: `Sudah ada praktikum di hari ${hari}, shift ${shift}` }),
+        { status: 400 }
+      );
+    }
+
+    // Tambah praktikum baru
+    const [result] = await conn.execute(
+      `INSERT INTO tb_praktikum 
+        (mata_kuliah, jurusan, kelas, semester, hari, jam_mulai, jam_ahir, shift, assisten, catatan)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [mata_kuliah, jurusan, kelas, semester, hari, jam_mulai, jam_ahir, shift, assisten, catatan]
+    );
+    const newId = result.insertId;
+
+
     await conn.end();
-    return Response.json({ message: "Praktikum & jadwal berhasil ditambahkan", id: newId });
+    return Response.json({ message: "praktikum & jadwal berhasil ditambahkan", id: newId });
   } catch (err) {
     console.error("POST Error:", err);
-    return new Response(JSON.stringify({ error: err.message || "Unauthorized" }), { status: 401 });
+    return new Response(
+      JSON.stringify({ error: err.message || "Unauthorized" }),
+      { status: 401 }
+    );
   }
 }
 
-// 🔹 PUT update praktikum
+// ==================== 🔹 PUT ====================
 export async function PUT(req) {
   try {
     const user = await auth(req);
@@ -102,63 +111,84 @@ export async function PUT(req) {
     }
 
     const body = await req.json();
-    const { ID, Mata_Kuliah, Jurusan, Kelas, Semester, Hari, Jam_Mulai, Jam_Ahir, Shift, Assisten, Catatan } = body;
+    const {
+      id, mata_kuliah, jurusan, kelas, semester,
+      hari, jam_mulai, jam_ahir, shift, assisten, catatan
+    } = body;
 
     const conn = await getConnection();
 
-    // cek duplikasi update
+    // Cek duplikasi
     const [duplikasi] = await conn.execute(
-      `SELECT ID FROM tb_praktikum WHERE Mata_Kuliah=? AND Kelas=? AND ID!=?`,
-      [Mata_Kuliah, Kelas, ID]
+      "SELECT id FROM tb_praktikum WHERE mata_kuliah=? AND kelas=? AND id!=?",
+      [mata_kuliah, kelas, id]
     );
     if (duplikasi.length > 0) {
       await conn.end();
-      return new Response(JSON.stringify({ error: `Praktikum ${Mata_Kuliah} untuk kelas ${Kelas} sudah ada` }), { status: 400 });
+      return new Response(
+        JSON.stringify({ error: `praktikum ${mata_kuliah} untuk kelas ${kelas} sudah ada` }),
+        { status: 400 }
+      );
     }
 
-    // cek bentrok shift
+    // Cek bentrok shift
     const [bentrok] = await conn.execute(
-      `SELECT ID FROM tb_praktikum WHERE Hari=? AND Shift=? AND ID!=?`,
-      [Hari, Shift, ID]
+      "SELECT id FROM tb_praktikum WHERE hari=? AND shift=? AND id!=?",
+      [hari, shift, id]
     );
     if (bentrok.length > 0) {
       await conn.end();
-      return new Response(JSON.stringify({ error: `Sudah ada praktikum di hari ${Hari}, shift ${Shift}` }), { status: 400 });
+      return new Response(
+        JSON.stringify({ error: `Sudah ada praktikum di hari ${hari}, shift ${shift}` }),
+        { status: 400 }
+      );
     }
 
+    // Update data
     await conn.execute(
       `UPDATE tb_praktikum
-       SET Mata_Kuliah=?, Jurusan=?, Kelas=?, Semester=?, Hari=?, Jam_Mulai=?, Jam_Ahir=?, Shift=?, Assisten=?, Catatan=?
-       WHERE ID=?`,
-      [Mata_Kuliah, Jurusan, Kelas, Semester, Hari, Jam_Mulai, Jam_Ahir, Shift, Assisten, Catatan, ID]
+       SET mata_kuliah=?, jurusan=?, kelas=?, semester=?, hari=?, 
+           jam_mulai=?, jam_ahir=?, shift=?, assisten=?, catatan=?
+       WHERE id=?`,
+      [mata_kuliah, jurusan, kelas, semester, hari, jam_mulai, jam_ahir, shift, assisten, catatan, id]
     );
 
     await conn.end();
-    return Response.json({ message: "Praktikum berhasil diperbarui" });
+    return Response.json({ message: "praktikum berhasil diperbarui" });
   } catch (err) {
     console.error("PUT Error:", err);
-    return new Response(JSON.stringify({ error: err.message || "Unauthorized" }), { status: 401 });
+    return new Response(
+      JSON.stringify({ error: err.message || "Unauthorized" }),
+      { status: 401 }
+    );
   }
 }
 
-// 🔹 DELETE hapus praktikum
+// ✅ DELETE PRAKTIKUM
 export async function DELETE(req) {
   try {
-    const user = await auth(req);
-    if (!["admin", "laboran"].includes(user.role)) {
-      return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403 });
-    }
-
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
 
-    const conn = await getConnection();
-    await conn.execute("DELETE FROM tb_praktikum WHERE ID=?", [id]);
-    await conn.end();
+    if (!id) return Response.json({ error: "Missing id" }, { status: 400 });
 
-    return Response.json({ message: "Praktikum berhasil dihapus" });
+    const db = await getConnection();
+
+    // 🔹 Hapus dulu semua jadwal yang berelasi
+    await db.execute("DELETE FROM tb_jadwal WHERE id = ?", [id]);
+
+    // 🔹 Baru hapus data praktikum
+    const [result] = await db.execute("DELETE FROM tb_praktikum WHERE id = ?", [id]);
+
+    await db.end();
+
+    if (result.affectedRows === 0)
+      return Response.json({ error: "Data not found" }, { status: 404 });
+
+    return Response.json({ success: true, message: "Praktikum & jadwal terkait dihapus" });
   } catch (err) {
-    console.error("DELETE Error:", err);
-    return new Response(JSON.stringify({ error: err.message || "Unauthorized" }), { status: 401 });
+    console.error("🔥 ERROR DELETE PRAKTIKUM:", err);
+    return Response.json({ error: err.message }, { status: 500 });
   }
 }
+

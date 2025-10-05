@@ -1,8 +1,19 @@
-// app/layout.jsx
-import "./globals.css";// app/regler-admin-pengaturan/layout.jsx
+'use client';
+
+import "./globals.css";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function AdminLayout({ children }) {
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    await fetch("/api/auth/logout", {
+      method: "POST",
+    });
+    router.push("/regler-admin-pengaturan/login");
+  };
+
   return (
     <>
       {/* Bagian atas yang selalu tampil */}
@@ -21,10 +32,15 @@ export default function AdminLayout({ children }) {
             <li><Link href="/regler-admin-pengaturan/rekap" className="underline">Rekap Presensi</Link></li>
             <li><Link href="/regler-admin-pengaturan/peserta_kuliah" className="underline">Peserta Kuliah</Link></li>
             <li><Link href="/regler-admin-pengaturan/approve" className="underline">Approve</Link></li>
-
-
           </ul>
         </nav>
+
+        <button
+          onClick={handleLogout}
+          className="mt-6 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
+        >
+          Logout
+        </button>
       </header>
 
       {/* Konten halaman */}

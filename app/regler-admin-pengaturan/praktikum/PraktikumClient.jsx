@@ -1,3 +1,4 @@
+//app/regler-admin-pengaturan/praktikum/PraktikumClient.jsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -6,47 +7,47 @@ import Link from "next/link"; // ✅ harus diimport
 export default function PraktikumClient({ user }) {
   const daftarMataKuliah = [
     "Pengantar Teknologi Informasi",
-    "Basis Data",
-    "Struktur Data dan Algoritma",
-    "Pemrograman Klient Server",
-    "Pemrograman Web",
-    "Pemrograman Berorientasi Objek",
-    "Sistem Operasi",
-    "Jaringan Komputer",
+"Basis Data",
+"Struktur Data dan Algoritma",
+"Pemrograman Berorientasi Objek",
+"Web Programing",
+"Pemrograman Klirnt-Server",
+"Sistem Operasi",
+"Jaringan Komputer",
   ];
 
-  const daftarJurusan = ["Resiskom", "Informatika", "Statistika"];
+  const daftarjurusan = ["Resiskom", "Informatika", "Statistika"];
 
-  const daftarKelas = ["A", "K"];
+  const daftarkelas = ["A", "K"];
 
-  const daftarSemester = ["1", "2", "3", "4", "5", "6", "7", "8"];
+  const daftarsemester = ["1", "2", "3", "4", "5", "6", "7", "8"];
+  const daftarhari = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat"];
 
-  const daftarShift = {
-    "Shift I": { Jam_Mulai: "07:30", Jam_Ahir: "10:30" },
-    "Shift II": { Jam_Mulai: "10:30", Jam_Ahir: "13:30" },
-    "Shift III": { Jam_Mulai: "13:30", Jam_Ahir: "16:30" },
-    "Shift IV": { Jam_Mulai: "16:30", Jam_Ahir: "19:30" },
-    "Shift V": { Jam_Mulai: "19:30", Jam_Ahir: "22:30" },
+  const daftarshift = {
+    "shift I": { jam_mulai: "07:30", jam_ahir: "10:30" },
+    "shift II": { jam_mulai: "10:30", jam_ahir: "13:30" },
+    "shift III": { jam_mulai: "13:30", jam_ahir: "16:30" },
+    "shift IV": { jam_mulai: "16:30", jam_ahir: "19:30" },
+    "shift V": { jam_mulai: "19:30", jam_ahir: "22:30" },
   };
 
   const [list, setList] = useState([]);
   const [form, setForm] = useState({
-    Mata_Kuliah: "",
-    Mata_Kuliah_Select: "",
-    Jurusan: "",
-    Jurusan_Select: "",
-    Kelas: "",
-    Kelas_Select: "",
-    Semester: "",
-    Semester_Select: "",
-    Hari: "",
-    Jam_Mulai: "",
-    Jam_Ahir: "",
-    Shift: "",
-    Shift_Select: "",
-    Assisten: "",
-    Catatan: "",
-    Tanggal_Mulai: "",
+    mata_kuliah: "",
+   mata_kuliah_Select: "",
+    jurusan: "",
+    jurusan_Select: "",
+    kelas: "",
+    kelas_Select: "",
+    semester: "",
+    semester_Select: "",
+    hari: "",
+    jam_mulai: "",
+    jam_ahir: "",
+    shift: "",
+    shift_Select: "",
+    assisten: "",
+    catatan: "",
   });
   const [editId, setEditId] = useState(null);
   const [showModal, setShowModal] = useState(false);
@@ -62,7 +63,7 @@ export default function PraktikumClient({ user }) {
     e.preventDefault();
 
     const method = editId ? "PUT" : "POST";
-    const body = editId ? { ...form, ID: editId } : form;
+    const body = editId ? { ...form, id: editId } : form;
 
     const res = await fetch("/api/admin/praktikum", {
       method,
@@ -83,55 +84,58 @@ export default function PraktikumClient({ user }) {
 
   const del = async (id) => {
     if (!confirm("Hapus data ini?")) return;
-    const res = await fetch(`/api/admin/praktikum?id=${id}`, { method: "DELETE" });
+    const res = await fetch(`/api/admin/praktikum?id=${id}`, {
+  method: "DELETE",
+  credentials: "include",
+});
+
     if (res.ok) location.reload();
   };
 
   const openModal = (p = null) => {
     if (p) {
-      setEditId(p.ID);
+      setEditId(p.id);
 
       setForm({
         ...p,
-        Mata_Kuliah_Select: daftarMataKuliah.includes(p.Mata_Kuliah)
-          ? p.Mata_Kuliah
+       mata_kuliah_Select: daftarMataKuliah.includes(p.mata_kuliah)
+          ? p.mata_kuliah
           : "Lainnya",
-        Mata_Kuliah: p.Mata_Kuliah,
-        Jurusan_Select: daftarJurusan.includes(p.Jurusan)
-          ? p.Jurusan
+       mata_kuliah: p.mata_kuliah,
+        jurusan_Select: daftarjurusan.includes(p.jurusan)
+          ? p.jurusan
           : "Lainnya",
-        Jurusan: p.Jurusan,
-        Kelas_Select: daftarKelas.includes(p.Kelas)
-          ? p.Kelas
+        jurusan: p.jurusan,
+        kelas_Select: daftarkelas.includes(p.kelas)
+          ? p.kelas
           : "Lainnya",
-        Kelas: p.Kelas,
-        Semester_Select: daftarSemester.includes(p.Semester)
-          ? p.Semester
+        kelas: p.kelas,
+        semester_Select: daftarsemester.includes(p.semester)
+          ? p.semester
           : "Lainnya",
-        Semester: p.Semester,
-        Shift_Select: daftarShift[p.Shift]
-          ? p.Shift : "Lainnya",
-        Shift: p.Shift,
+        semester: p.semester,
+        shift_Select: daftarshift[p.shift]
+          ? p.shift : "Lainnya",
+        shift: p.shift,
       });
     } else {
       setEditId(null);
       setForm({
-        Mata_Kuliah: "",
-        Mata_Kuliah_Select: "",
-        Jurusan: "",
-        Jurusan_Select: "",
-        Kelas: "",
-        Kelas_Select: "",
-        Semester: "",
-        Semester_Select: "",
-        Hari: "",
-        Jam_Mulai: "",
-        Jam_Ahir: "",
-        Shift: "",
-        Shift_Select: "",
-        Assisten: "",
-        Catatan: "",
-        Tanggal_Mulai: "",
+       mata_kuliah: "",
+       mata_kuliah_Select: "",
+        jurusan: "",
+        jurusan_Select: "",
+        kelas: "",
+        kelas_Select: "",
+        semester: "",
+        semester_Select: "",
+        hari: "",
+        jam_mulai: "",
+        jam_ahir: "",
+        shift: "",
+        shift_Select: "",
+        assisten: "",
+        catatan: "",
       });
     }
     setShowModal(true);
@@ -151,22 +155,6 @@ export default function PraktikumClient({ user }) {
         Halo, {user.username} — role: {user.role}
       </p>
 
-      <div className="mt-4 space-x-4">
-        <Link href="/regler-admin-pengaturan/register" className="underline">Register</Link>
-        <Link href="/regler-admin-pengaturan/dashboard" className="underline">Dashboard</Link>
-        <Link href="/regler-admin-pengaturan/praktikum" className="underline">Praktikum</Link>
-        <Link href="/regler-admin-pengaturan/presensi" className="underline">Presensi</Link>
-        <Link href="/regler-admin-pengaturan/modul" className="underline">Modul</Link>
-        <Link href="/regler-admin-pengaturan/peminjaman" className="underline">Peminjaman</Link>
-        <Link href="/regler-admin-pengaturan/kalender" className="underline">Kalender</Link>
-        <Link href="/regler-admin-pengaturan/akun" className="underline">Akun</Link>
-      </div>
-      <button
-        onClick={handleLogout}
-        className="mt-6 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
-      >
-        Logout
-      </button>
 
       {(user.role === "admin" || user.role === "laboran") && (
         <button
@@ -177,36 +165,37 @@ export default function PraktikumClient({ user }) {
         </button>
       )}
 
-      <div className="overflow-x-auto mt-4">
-        <table className="min-w-full border border-gray-300">
+      <div className="w-full mt-4">
+  <table className="w-full table-auto border border-gray-300">
+
           <thead className="bg-gray-100">
             <tr>
               <th className="border px-3 py-2">ID</th>
               <th className="border px-3 py-2">Mata Kuliah</th>
-              <th className="border px-3 py-2">Jurusan</th>
-              <th className="border px-3 py-2">Kelas</th>
-              <th className="border px-3 py-2">Semester</th>
+              <th className="border px-3 py-2">jurusan</th>
+              <th className="border px-3 py-2">kelas</th>
+              <th className="border px-3 py-2">semester</th>
               <th className="border px-3 py-2">Hari</th>
               <th className="border px-3 py-2">Jam</th>
-              <th className="border px-3 py-2">Shift</th>
-              <th className="border px-3 py-2">Asisten</th>
+              <th className="border px-3 py-2">shift</th>
+              <th className="border px-3 py-2">Assisten</th>
               <th className="border px-3 py-2">Aksi</th>
             </tr>
           </thead>
           <tbody>
             {list.map((p) => (
-              <tr key={p.ID} className="hover:bg-gray-50">
-                <td className="border px-3 py-1">{p.ID}</td>
-                <td className="border px-3 py-1">{p.Mata_Kuliah}</td>
-                <td className="border px-3 py-1">{p.Jurusan}</td>
-                <td className="border px-3 py-1">{p.Kelas}</td>
-                <td className="border px-3 py-1">{p.Semester}</td>
-                <td className="border px-3 py-1">{p.Hari}</td>
+              <tr key={p.id} className="hover:bg-gray-50">
+                <td className="border px-3 py-1">{p.id}</td>
+                <td className="border px-3 py-1">{p.mata_kuliah}</td>
+                <td className="border px-3 py-1">{p.jurusan}</td>
+                <td className="border px-3 py-1">{p.kelas}</td>
+                <td className="border px-3 py-1">{p.semester}</td>
+                <td className="border px-3 py-1">{p.hari}</td>
                 <td className="border px-3 py-1">
-                  {p.Jam_Mulai} - {p.Jam_Ahir}
+                  {p.jam_mulai} - {p.jam_ahir}
                 </td>
-                <td className="border px-3 py-1">{p.Shift}</td>
-                <td className="border px-3 py-1">{p.Assisten}</td>
+                <td className="border px-3 py-1">{p.shift}</td>
+                <td className="border px-3 py-1">{p.assisten}</td>
                 <td className="border px-3 py-1 space-x-1">
                   {(user.role === "admin" || user.role === "laboran") && (
                     <>
@@ -217,7 +206,7 @@ export default function PraktikumClient({ user }) {
                         Edit
                       </button>
                       <button
-                        onClick={() => del(p.ID)}
+                        onClick={() => del(p.id)}
                         className="px-2 py-1 bg-red-500 rounded hover:bg-red-600 text-white"
                       >
                         Delete
@@ -253,8 +242,8 @@ export default function PraktikumClient({ user }) {
                 const val = e.target.value;
                 setForm({
                   ...form,
-                  Mata_Kuliah_Select: val,
-                  Mata_Kuliah: val === "Lainnya" ? "" : val,
+                 mata_kuliah_Select: val,
+                 mata_kuliah: val === "Lainnya" ? "" : val,
                 });
               }}
               className="w-full border px-3 py-2 rounded mb-2"
@@ -276,26 +265,26 @@ export default function PraktikumClient({ user }) {
                 placeholder="Mata Kuliah Lainnya"
                 value={form.Mata_Kuliah}
                 onChange={(e) =>
-                  setForm({ ...form, Mata_Kuliah: e.target.value })
+                  setForm({ ...form,mata_kuliah: e.target.value })
                 }
                 className="w-full border px-3 py-2 rounded mb-2"
               />
             )}
 
-            {/* Dropdown Jurusan */}
+            {/* Dropdown jurusan */}
             <select
-              value={form.Jurusan_Select}
+              value={form.jurusan_Select}
               onChange={(e) =>
                 setForm({
                   ...form,
-                  Jurusan_Select: e.target.value,
-                  Jurusan: e.target.value === "Lainnya" ? "" : e.target.value,
+                  jurusan_Select: e.target.value,
+                  jurusan: e.target.value === "Lainnya" ? "" : e.target.value,
                 })
               }
               className="w-full border px-3 py-2 rounded mb-2"
             >
-              <option value="">Pilih Jurusan</option>
-              {daftarJurusan.map((j) => (
+              <option value="">Pilih jurusan</option>
+              {daftarjurusan.map((j) => (
                 <option key={j} value={j}>
                   {j}
                 </option>
@@ -303,31 +292,31 @@ export default function PraktikumClient({ user }) {
               <option value="Lainnya">Lainnya</option>
             </select>
 
-            {form.Jurusan_Select === "Lainnya" && (
+            {form.jurusan_Select === "Lainnya" && (
               <input
-                placeholder="Jurusan Lainnya"
-                value={form.Jurusan}
+                placeholder="jurusan Lainnya"
+                value={form.jurusan}
                 onChange={(e) =>
-                  setForm({ ...form, Jurusan: e.target.value })
+                  setForm({ ...form, jurusan: e.target.value })
                 }
                 className="w-full border px-3 py-2 rounded mb-2"
               />
             )}
 
-            {/* Dropdown Kelas */}
+            {/* Dropdown kelas */}
             <select
-              value={form.Kelas_Select}
+              value={form.kelas_Select}
               onChange={(e) =>
                 setForm({
                   ...form,
-                  Kelas_Select: e.target.value,
-                  Kelas: e.target.value === "Lainnya" ? "" : e.target.value,
+                  kelas_Select: e.target.value,
+                  kelas: e.target.value === "Lainnya" ? "" : e.target.value,
                 })
               }
               className="w-full border px-3 py-2 rounded mb-2"
             >
-              <option value="">Pilih Kelas</option>
-              {daftarKelas.map((k) => (
+              <option value="">Pilih kelas</option>
+              {daftarkelas.map((k) => (
                 <option key={k} value={k}>
                   {k}
                 </option>
@@ -335,31 +324,31 @@ export default function PraktikumClient({ user }) {
               <option value="Lainnya">Lainnya</option>
             </select>
 
-            {form.Kelas_Select === "Lainnya" && (
+            {form.kelas_Select === "Lainnya" && (
               <input
-                placeholder="Kelas Lainnya"
-                value={form.Kelas}
+                placeholder="kelas Lainnya"
+                value={form.kelas}
                 onChange={(e) =>
-                  setForm({ ...form, Kelas: e.target.value })
+                  setForm({ ...form, kelas: e.target.value })
                 }
                 className="w-full border px-3 py-2 rounded mb-2"
               />
             )}
 
-            {/* Dropdown Semester */}
+            {/* Dropdown semester */}
             <select
-              value={form.Semester_Select}
+              value={form.semester_Select}
               onChange={(e) =>
                 setForm({
                   ...form,
-                  Semester_Select: e.target.value,
-                  Semester: e.target.value === "Lainnya" ? "" : e.target.value,
+                  semester_Select: e.target.value,
+                  semester: e.target.value === "Lainnya" ? "" : e.target.value,
                 })
               }
               className="w-full border px-3 py-2 rounded mb-2"
             >
-              <option value="">Pilih Semester</option>
-              {daftarSemester.map((s) => (
+              <option value="">Pilih semester</option>
+              {daftarsemester.map((s) => (
                 <option key={s} value={s}>
                   {s}
                 </option>
@@ -367,33 +356,71 @@ export default function PraktikumClient({ user }) {
               <option value="Lainnya">Lainnya</option>
             </select>
 
-            {form.Semester_Select === "Lainnya" && (
+            {form.semester_Select === "Lainnya" && (
               <input
-                placeholder="Semester Lainnya"
-                value={form.Semester}
+                placeholder="semester Lainnya"
+                value={form.semester}
                 onChange={(e) =>
-                  setForm({ ...form, Semester: e.target.value })
+                  setForm({ ...form, semester: e.target.value })
                 }
                 className="w-full border px-3 py-2 rounded mb-2"
               />
             )}
 
-            {/* Dropdown Shift */}
+
+
+
+            {/* Dropdown hari */}
             <select
-              value={form.Shift}
+              value={form.hari}
+              onChange={(e) =>
+                setForm({
+                  ...form,
+                  hari_Select: e.target.value,
+                  hari: e.target.value === "Lainnya" ? "" : e.target.value,
+                })
+              }
+              className="w-full border px-3 py-2 rounded mb-2"
+            >
+              <option value="">Pilih hari</option>
+              {daftarhari.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+              <option value="Lainnya">Lainnya</option>
+            </select>
+
+            {form.hari_Select === "Lainnya" && (
+              <input
+                placeholder="hari Lainnya"
+                value={form.hari}
+                onChange={(e) =>
+                  setForm({ ...form, hari: e.target.value })
+                }
+                className="w-full border px-3 py-2 rounded mb-2"
+              />
+            )}
+
+
+
+
+            {/* Dropdown shift */}
+            <select
+              value={form.shift}
               onChange={(e) => {
                 const val = e.target.value;
                 setForm({
                   ...form,
-                  Shift: val,
-                  Jam_Mulai: daftarShift[val]?.Jam_Mulai || "",
-                  Jam_Ahir: daftarShift[val]?.Jam_Ahir || "",
+                  shift: val,
+                  jam_mulai: daftarshift[val]?.jam_mulai || "",
+                  jam_ahir: daftarshift[val]?.jam_ahir || "",
                 });
               }}
               className="w-full border px-3 py-2 rounded mb-2"
             >
-              <option value="">Pilih Shift</option>
-              {Object.keys(daftarShift).map((s) => (
+              <option value="">Pilih shift</option>
+              {Object.keys(daftarshift).map((s) => (
                 <option key={s} value={s}>
                   {s}
                 </option>
@@ -402,29 +429,25 @@ export default function PraktikumClient({ user }) {
 
             {/* Input Assisten */}
             <input
-              placeholder="Nama Asisten"
-              value={form.Assisten}
-              onChange={(e) => setForm({ ...form, Assisten: e.target.value })}
+              placeholder="Nama Assisten"
+              value={form.assisten}
+              onChange={(e) => setForm({ ...form, assisten: e.target.value })}
               className="w-full border px-3 py-2 rounded mb-2"
             />
 
             {/* Input jamotomatis */}
             <div className="flex gap-2">
               <input
-                value={form.Jam_Mulai}
+                value={form.jam_mulai}
                 readOnly
                 className="w-1/2 border px-3 py-2 rounded bg-gray-100"
               />
               <input
-                value={form.Jam_Ahir}
+                value={form.jam_ahir}
                 readOnly
                 className="w-1/2 border px-3 py-2 rounded bg-gray-100"
               />
             </div>
-
-
-
-
 
             <div className="flex justify-end gap-2 mt-4">
               <button
