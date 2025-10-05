@@ -11,9 +11,18 @@ async function getConnection() {
 
 export async function GET() {
   const db = await getConnection();
-  const [praktikan] = await db.execute("SELECT id, nama FROM tb_praktikan ORDER BY nama ASC");
-  const [matkul] = await db.execute("SELECT id, mata_kuliah FROM tb_matakuliah ORDER BY mata_kuliah ASC");
+
+  // Ambil praktikan
+  const [praktikan] = await db.execute(
+    "SELECT id, nama FROM tb_praktikan ORDER BY nama ASC"
+  );
+
+  // Ambil praktikum
+  const [praktikum] = await db.execute(
+    "SELECT id, mata_kuliah FROM tb_praktikum ORDER BY mata_kuliah ASC"
+  );
+
   await db.end();
 
-  return Response.json({ praktikan, matkul });
+  return Response.json({ praktikan, praktikum });
 }

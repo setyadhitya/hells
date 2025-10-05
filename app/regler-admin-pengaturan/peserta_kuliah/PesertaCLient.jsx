@@ -3,18 +3,19 @@ import { useEffect, useState } from "react";
 
 export default function PesertaClient({ user }) {
   const [list, setList] = useState([]);
-  const [dropdown, setDropdown] = useState({ praktikan: [], matkul: [] });
-  const [mataKuliahId, setMataKuliahId] = useState("");
+  const [dropdown, setDropdown] = useState({ praktikan: [], praktikum: [] });
+  const [praktikumId, setPraktikumId] = useState("");
   const [praktikanList, setPraktikanList] = useState([{ praktikan_id: "" }]);
   const [showModal, setShowModal] = useState(false);
-  const [editId, setEditId] = useState(null);
 
+  // Load daftar peserta
   const loadData = async () => {
     const res = await fetch("/api/admin/peserta_kuliah", { cache: "no-store" });
     const data = await res.json();
     setList(data);
   };
 
+  // Load dropdown praktikan & praktikum
   const loadDropdown = async () => {
     const res = await fetch("/api/admin/peserta_kuliah/dropdown", { cache: "no-store" });
     const data = await res.json();
@@ -26,42 +27,47 @@ export default function PesertaClient({ user }) {
     loadDropdown();
   }, []);
 
-  const addPraktikanField = () => {
-    setPraktikanList([...praktikanList, { praktikan_id: "" }]);
-  };
-
+  // Tambah / hapus field praktikan
+  const addPraktikanField = () => setPraktikanList([...praktikanList, { praktikan_id: "" }]);
   const removePraktikanField = (index) => {
     const newList = [...praktikanList];
     newList.splice(index, 1);
     setPraktikanList(newList);
   };
 
-  const handleChange = (index, value) => {
+  const handlePraktikanChange = (index, value) => {
     const newList = [...praktikanList];
     newList[index].praktikan_id = value;
     setPraktikanList(newList);
   };
 
+  // Simpan peserta
   const save = async (e) => {
     e.preventDefault();
-    if (!mataKuliahId) return alert("Pilih mata kuliah dulu");
+    if (!praktikumId) return alert("Pilih praktikum dulu");
 
     const body = praktikanList.map((p) => ({
       praktikan_id: p.praktikan_id,
-      mata_kuliah_id: mataKuliahId,
+      praktikum_id: praktikumId,
     }));
 
-    const res = await fetch("/api/admin/peserta_kuliah", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-
-    const result = await res.json();
-    if (!res.ok || result.error) return alert(result.error);
-    alert("Peserta berhasil ditambahkan");
-    setShowModal(false);
-    loadData();
+    try {
+      const res = await fetch("/api/admin/peserta_kuliah", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const result = await res.json();
+      if (!res.ok || result.error) return alert(result.error);
+      alert("Peserta berhasil ditambahkan");
+      setShowModal(false);
+      setPraktikumId("");
+      setPraktikanList([{ praktikan_id: "" }]);
+      loadData();
+    } catch (err) {
+      console.error(err);
+      alert("Gagal menambahkan peserta");
+    }
   };
 
   const del = async (id) => {
@@ -85,7 +91,7 @@ export default function PesertaClient({ user }) {
             <tr>
               <th className="border px-3 py-2">No</th>
               <th className="border px-3 py-2">Nama Praktikan</th>
-              <th className="border px-3 py-2">Mata Kuliah</th>
+              <th className="border px-3 py-2">Praktikum</th>
               <th className="border px-3 py-2">Tanggal</th>
               <th className="border px-3 py-2">Aksi</th>
             </tr>
@@ -95,7 +101,7 @@ export default function PesertaClient({ user }) {
               <tr key={i} className="hover:bg-gray-50">
                 <td className="border px-3 py-1">{i + 1}</td>
                 <td className="border px-3 py-1">{item.praktikan}</td>
-                <td className="border px-3 py-1">{item.mata_kuliah}</td>
+                <td className="border px-3 py-1">{item.praktikum}</td>
                 <td className="border px-3 py-1">
                   {new Date(item.created_at).toLocaleString()}
                 </td>
@@ -113,6 +119,7 @@ export default function PesertaClient({ user }) {
         </table>
       </div>
 
+      {/* Modal Tambah Peserta */}
       {showModal && (
         <div
           className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50"
@@ -124,35 +131,34 @@ export default function PesertaClient({ user }) {
           >
             <h3 className="text-xl font-semibold mb-4">Tambah Peserta Kuliah</h3>
 
-            {/* Dropdown Mata Kuliah */}
-            <select
-              value={mataKuliahId}
-              onChange={(e) => setMataKuliahId(e.target.value)}
-              className="w-full border px-3 py-2 rounded mb-3"
-              required
-            >
-              <option value="">-- Pilih Mata Kuliah --</option>
-              {dropdown.matkul.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.mata_kuliah}
-                </option>
-              ))}
-            </select>
+            {/* Dropdown Praktikum */}
+            <div className="mb-4">
+              <label className="block font-semibold mb-1">Praktikum</label>
+              <select
+                value={praktikumId}
+                onChange={(e) => setPraktikumId(e.target.value)}
+                className="w-full border p-2 rounded"
+                required
+              >
+                <option value="">-- Pilih Praktikum --</option>
+                {dropdown.praktikum.map((p) => (
+                  <option key={p.id} value={p.id}>{p.mata_kuliah}</option>
+                ))}
+              </select>
+            </div>
 
             {/* Multi Praktikan */}
             {praktikanList.map((p, i) => (
               <div key={i} className="flex gap-2 mb-2">
                 <select
                   value={p.praktikan_id}
-                  onChange={(e) => handleChange(i, e.target.value)}
+                  onChange={(e) => handlePraktikanChange(i, e.target.value)}
                   className="flex-1 border px-3 py-2 rounded"
                   required
                 >
                   <option value="">-- Pilih Praktikan --</option>
                   {dropdown.praktikan.map((pr) => (
-                    <option key={pr.id} value={pr.id}>
-                      {pr.nama}
-                    </option>
+                    <option key={pr.id} value={pr.id}>{pr.nama}</option>
                   ))}
                 </select>
                 {praktikanList.length > 1 && (

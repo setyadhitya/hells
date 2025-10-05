@@ -1,12 +1,12 @@
-"use client"
+"use client";
 import { useState, useEffect } from "react";
 
-export default function Clientpage({ user }) {
+export default function PageClient({ user }) {
   const [tugasList, setTugasList] = useState([]);
   const [form, setForm] = useState({
     praktikum_id: "",
     pertemuan: "",
-    file: null
+    file: null,
   });
   const [loading, setLoading] = useState(false);
 
@@ -14,7 +14,7 @@ export default function Clientpage({ user }) {
   useEffect(() => {
     const fetchTugas = async () => {
       try {
-        const res = await fetch("/api/akun_assisten/tugas/list"); // API list tugas
+        const res = await fetch("/api/akun/kumpul_tugas/list");
         const data = await res.json();
         setTugasList(data);
       } catch (err) {
@@ -28,7 +28,7 @@ export default function Clientpage({ user }) {
     const { name, value, files } = e.target;
     setForm((prev) => ({
       ...prev,
-      [name]: files ? files[0] : value
+      [name]: files ? files[0] : value,
     }));
   };
 
@@ -38,14 +38,14 @@ export default function Clientpage({ user }) {
 
     try {
       const formData = new FormData();
-      formData.append("praktikan_id", user.id); // id mahasiswa
+      formData.append("praktikan_id", user.id);
       formData.append("praktikum_id", form.praktikum_id);
       formData.append("pertemuan", form.pertemuan);
       if (form.file) formData.append("file", form.file);
 
       const res = await fetch("/api/akun/kumpul_tugas", {
         method: "POST",
-        body: formData
+        body: formData,
       });
       const data = await res.json();
 
@@ -53,7 +53,7 @@ export default function Clientpage({ user }) {
         alert("Tugas berhasil dikumpulkan!");
         setForm({ praktikum_id: "", pertemuan: "", file: null });
       } else {
-        alert(data.error); // misal: "Anda bukan peserta mata kuliah ini"
+        alert(data.error);
       }
     } catch (err) {
       console.error(err);
@@ -81,7 +81,7 @@ export default function Clientpage({ user }) {
             <option value="">-- Pilih Mata Kuliah --</option>
             {tugasList.map((t) => (
               <option key={t.id} value={t.praktikum_id}>
-                {t.mata_kuliah} {/* tampil nama mata kuliah */}
+                {t.mata_kuliah}
               </option>
             ))}
           </select>
