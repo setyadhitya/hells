@@ -7,6 +7,7 @@ export async function POST(req) {
   try {
     const { username, password } = await req.json();
 
+    // 🔹 Cari user asisten berdasarkan username
     const [rows] = await db.query(
       "SELECT * FROM tb_assisten WHERE username = ? AND role = 'assisten'",
       [username]
@@ -37,7 +38,7 @@ export async function POST(req) {
 
     // 🔹 Buat token
     const token = await signToken({
-      id: user.id,
+      id: user.id, // gunakan id agar seragam dengan API lain
       username: user.username,
       nim: user.nim,
       role: user.role || "assisten",
@@ -54,7 +55,7 @@ export async function POST(req) {
       },
     });
 
-    // 🔹 Simpan cookie
+    // 🔹 Simpan token ke cookie
     res.cookies.set("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
@@ -65,7 +66,7 @@ export async function POST(req) {
 
     return res;
   } catch (err) {
-    console.error("Login Asisten Error:", err);
+    console.error("Login Asisten Error:", err.message);
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 }

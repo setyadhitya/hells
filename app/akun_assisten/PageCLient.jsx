@@ -64,9 +64,12 @@ export default function PageClient({ user }) {
           <button className="p-4 bg-purple-100 rounded-xl shadow hover:bg-purple-200 transition">
             Pengumuman
           </button>
-          <button className="p-4 bg-orange-100 rounded-xl shadow hover:bg-orange-200 transition">
+          <Link
+            href="/akun_assisten/akun"
+            className="p-4 bg-orange-100 rounded-xl shadow hover:bg-orange-200 transition block text-center"
+          >
             Akun
-          </button>
+          </Link>
           <button
             onClick={handleLogout}
             className="p-4 bg-red-500 text-white font-semibold rounded-xl shadow hover:bg-red-600 transition"
