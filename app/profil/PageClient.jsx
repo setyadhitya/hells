@@ -55,9 +55,13 @@ export default function PageClient({ user }) {
           >
             Presensi
           </Link>
-          <button className="p-4 bg-yellow-100 rounded-xl shadow hover:bg-yellow-200 transition">
+         
+          <Link
+            href="/profil/kumpul_tugas"
+            className="p-4 bg-yellow-100 rounded-xl shadow hover:bg-yellow-200 transition block text-center"
+          >
             Kumpulkan Tugas
-          </button>
+          </Link>
           <button className="p-4 bg-green-100 rounded-xl shadow hover:bg-green-200 transition">
             Aktivitas
           </button>

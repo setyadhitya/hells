@@ -39,7 +39,7 @@ export default function PageClient({ user }) {
       {/* Header Profil */}
       <div className="bg-white shadow rounded-lg p-6 mb-6">
         <h1 className="text-2xl font-bold text-gray-800">Halaman Assisten</h1>
-        <p className="mt-2 text-gray-600">Halo, {assisten.nama} ({assisten.username})</p>
+        <p className="mt-2 text-gray-600">Halo, {assisten.nama}</p>
         <p className="text-gray-500 text-sm">NIM: {assisten.nim} | No. HP: {assisten.nomorhp}</p>
         <p className={`mt-2 font-semibold ${assisten.status === "aktif" ? "text-green-600" : "text-red-600"}`}>
           Status: {assisten.status}
@@ -55,9 +55,12 @@ export default function PageClient({ user }) {
           >
             Buat Kode Presensi
           </Link>
-          <button className="p-4 bg-yellow-100 rounded-xl shadow hover:bg-yellow-200 transition">
-            Kumpulkan Tugas
-          </button>
+          <Link
+            href="/akun_assisten/beri_tugas"
+            className="p-4 bg-blue-100 rounded-xl shadow hover:bg-blue-200 transition block text-center"
+          >
+            Penugasan
+          </Link>
           <button className="p-4 bg-green-100 rounded-xl shadow hover:bg-green-200 transition">
             Aktivitas
           </button>
