@@ -10,6 +10,7 @@
   "dependencies": {
     "bcrypt": "^6.0.0",
     "bcryptjs": "^3.0.2",
+    "cookie": "^1.0.2",
     "formidable": "^3.5.4",
     "framer-motion": "^12.23.12",
     "fs": "^0.0.1-security",
@@ -21,8 +22,10 @@
     "mysql2": "^3.14.3",
     "next": "^15.5.4",
     "path": "^0.12.7",
+    "rate-limiter-flexible": "^8.0.1",
     "react": "19.1.0",
-    "react-dom": "19.1.0"
+    "react-dom": "19.1.0",
+    "uuid": "^13.0.0"
   },
   "devDependencies": {
     "autoprefixer": "^10.4.19",
