@@ -10,26 +10,26 @@ async function seed() {
     database: "stern"  // ganti sesuai nama database kamu
   });
 
-  const username = "buah";
-  const plainPassword = "naga";
+  const username = "yogi";
+  const plainPassword = "yogi11";
   const hashedPassword = await bcrypt.hash(plainPassword, 10);
 
   // cek apakah user sudah ada
   const [rows] = await connection.execute(
-    "SELECT * FROM tb_users WHERE username = ?",
+    "SELECT * FROM tb_assisten WHERE username = ?",
     [username]
   );
 
   if (rows.length > 0) {
     console.log("User sudah ada, update password...");
     await connection.execute(
-      "UPDATE tb_users SET password = ? WHERE username = ?",
+      "UPDATE tb_assisten SET password = ? WHERE username = ?",
       [hashedPassword, username]
     );
   } else {
     console.log("User belum ada, buat baru...");
     await connection.execute(
-      "INSERT INTO tb_users (username, password) VALUES (?, ?)",
+      "INSERT INTO tb_assisten (username, password) VALUES (?, ?)",
       [username, hashedPassword]
     );
   }

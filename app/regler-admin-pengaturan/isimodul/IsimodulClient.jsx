@@ -21,10 +21,9 @@ export default function IsimodulClient({ user }) {
   const [showModal, setShowModal] = useState(false);
   const [modulList, setModulList] = useState([]);
   const [pertemuanList, setPertemuanList] = useState([]);
-  // daftar halaman 1 sampai 50
   const halamanList = Array.from({ length: 50 }, (_, i) => i + 1);
 
-  // 🔹 Load isi modul
+  // 🔹 Load semua isi modul
   const loadData = async () => {
     const res = await fetch("/api/admin/isimodul", { cache: "no-store" });
     const data = await res.json();
@@ -50,7 +49,10 @@ export default function IsimodulClient({ user }) {
       body: JSON.stringify({ mata_kuliah: mk }),
     });
     const data = await res.json();
-    const perts = (Array.isArray(data) ? data.map((r) => String(r.pertemuan ?? "").trim()) : []);
+    // Pastikan array string
+    const perts = Array.isArray(data)
+      ? data.map((r) => (r.pertemuan ?? r).toString().trim())
+      : [];
     setPertemuanList(perts);
     return perts;
   };
@@ -64,20 +66,20 @@ export default function IsimodulClient({ user }) {
   const save = async (e) => {
     e.preventDefault();
 
-    // cek duplikasi di list sebelum submit
+    // Cek duplikasi
     const exists = list.find(
       (item) =>
         item.mata_kuliah === form.mata_kuliah &&
         item.pertemuan === form.pertemuan &&
         item.halaman === form.halaman &&
-        item.id !== editId // abaikan diri sendiri kalau sedang edit
+        item.id !== editId
     );
-
     if (exists) {
-      alert("Data dengan Mata Kuliah, Pertemuan, dan Halaman ini sudah ada! Gunakan halaman berbeda.");
+      alert(
+        "Data dengan Mata Kuliah, Pertemuan, dan Halaman ini sudah ada! Gunakan halaman berbeda."
+      );
       return;
     }
-
 
     const fd = new FormData();
     fd.append("mata_kuliah", form.mata_kuliah);
@@ -88,7 +90,6 @@ export default function IsimodulClient({ user }) {
 
     let url = "/api/admin/isimodul";
     let method = "POST";
-
     if (editId) {
       fd.append("id", editId);
       method = "PUT";
@@ -96,7 +97,6 @@ export default function IsimodulClient({ user }) {
 
     const res = await fetch(url, { method, body: fd });
     const result = await res.json();
-
     if (!res.ok || result.error) {
       alert(result.error || "Terjadi kesalahan");
       return;
@@ -109,13 +109,11 @@ export default function IsimodulClient({ user }) {
   // 🔹 Delete
   const del = async (id) => {
     if (!confirm("Hapus isi modul ini?")) return;
-    const res = await fetch(`/api/admin/isimodul?id=${id}`, {
-      method: "DELETE",
-    });
+    const res = await fetch(`/api/admin/isimodul?id=${id}`, { method: "DELETE" });
     if (res.ok) await loadData();
   };
 
-  // 🔹 Open modal (Tambah atau Edit)
+  // 🔹 Open modal (Tambah/Edit)
   const openModal = async (m = null) => {
     if (m) {
       setEditId(m.id);
@@ -126,13 +124,11 @@ export default function IsimodulClient({ user }) {
 
       let selectedPert = "";
       if (perts && perts.length) {
-        selectedPert = perts.find((p) => p === oldPert) || "";
-        if (!selectedPert) {
-          selectedPert = perts.find((p) => p.toLowerCase() === oldPert.toLowerCase()) || "";
-        }
-        if (!selectedPert) {
-          selectedPert = perts.find((p) => p.includes(oldPert) || oldPert.includes(p)) || "";
-        }
+        selectedPert =
+          perts.find((p) => p === oldPert) ||
+          perts.find((p) => p.toLowerCase() === oldPert.toLowerCase()) ||
+          perts.find((p) => p.includes(oldPert) || oldPert.includes(p)) ||
+          "";
       }
 
       setForm({
@@ -143,15 +139,13 @@ export default function IsimodulClient({ user }) {
         gambar: data.gambar ?? null,
       });
 
-      // untuk preview awal
       if (data.gambar) {
-        setPreviewUrl(data.gambar); // URL dari server
-        setFileName(data.gambar.split("/").pop()); // ambil nama file dari path
+        setPreviewUrl(data.gambar);
+        setFileName(data.gambar.split("/").pop());
       } else {
         setPreviewUrl(null);
         setFileName("");
       }
-
     } else {
       setEditId(null);
       setForm({
@@ -166,23 +160,18 @@ export default function IsimodulClient({ user }) {
     setShowModal(true);
   };
 
-  // 🔹 Filter list sesuai pilihan dropdown
+  // 🔹 Filter list
   const filteredList = list.filter((item) => {
     let match = true;
-    if (filterMataKuliah) {
-      match = match && item.mata_kuliah === filterMataKuliah;
-    }
-    if (filterPertemuan) {
-      match = match && item.pertemuan === filterPertemuan;
-    }
+    if (filterMataKuliah) match = match && item.mata_kuliah === filterMataKuliah;
+    if (filterPertemuan) match = match && item.pertemuan === filterPertemuan;
     return match;
   });
 
   return (
     <div className="relative p-2">
-      {/* 🔹 Filter Mata Kuliah & Pertemuan */}
+      {/* Filter */}
       <div className="flex gap-4 mb-4">
-        {/* Dropdown Mata Kuliah */}
         <select
           value={filterMataKuliah}
           onChange={async (e) => {
@@ -196,7 +185,7 @@ export default function IsimodulClient({ user }) {
                 body: JSON.stringify({ mata_kuliah: mk }),
               });
               const data = await res.json();
-              setPertemuanOptions(data);
+              setPertemuanOptions(Array.isArray(data) ? data.map((d) => d.pertemuan ?? d) : []);
             } else {
               setPertemuanOptions([]);
             }
@@ -204,14 +193,15 @@ export default function IsimodulClient({ user }) {
           className="border px-3 py-2 rounded"
         >
           <option value="">-- Semua Mata Kuliah --</option>
-          {[...new Set(modulList.map((mk) => String(mk.mata_kuliah ?? "").trim()))].map((mk, i) => (
-            <option key={i} value={mk}>
-              {mk}
-            </option>
-          ))}
+          {[...new Set(modulList.map((mk) => String(mk.mata_kuliah ?? "").trim()))].map(
+            (mk, i) => (
+              <option key={i} value={mk}>
+                {mk}
+              </option>
+            )
+          )}
         </select>
 
-        {/* Dropdown Pertemuan */}
         <select
           value={filterPertemuan}
           onChange={(e) => setFilterPertemuan(e.target.value)}
@@ -219,14 +209,15 @@ export default function IsimodulClient({ user }) {
           disabled={!filterMataKuliah}
         >
           <option value="">-- Semua Pertemuan --</option>
-          {pertemuanOptions.map((p) => (
-            <option key={p.id} value={p.pertemuan}>
-              {p.pertemuan}
+          {pertemuanOptions.map((p, i) => (
+            <option key={i} value={p}>
+              {p}
             </option>
           ))}
         </select>
       </div>
 
+      {/* Tambah tombol */}
       {(user.role === "admin" || user.role === "laboran") && (
         <button
           onClick={() => openModal()}
@@ -251,34 +242,20 @@ export default function IsimodulClient({ user }) {
             </tr>
           </thead>
           <tbody>
-            {list
-              .slice() // buat salinan biar tidak merusak state asli
+            {filteredList
+              .slice()
               .sort((a, b) => {
-                // 1) Urut mata kuliah (alfabet)
                 if (a.mata_kuliah < b.mata_kuliah) return -1;
                 if (a.mata_kuliah > b.mata_kuliah) return 1;
 
-                // 2) Urut pertemuan (kalau bisa angka, bandingkan angka)
                 const pertA = parseInt(a.pertemuan, 10);
                 const pertB = parseInt(b.pertemuan, 10);
+                if (!isNaN(pertA) && !isNaN(pertB)) return pertA - pertB;
 
-                if (!isNaN(pertA) && !isNaN(pertB)) {
-                  if (pertA !== pertB) return pertA - pertB;
-                } else {
-                  // fallback string compare kalau bukan angka
-                  if (a.pertemuan < b.pertemuan) return -1;
-                  if (a.pertemuan > b.pertemuan) return 1;
-                }
-
-                // 3) Urut halaman (angka)
                 const halA = parseInt(a.halaman, 10);
                 const halB = parseInt(b.halaman, 10);
-
-                if (!isNaN(halA) && !isNaN(halB)) {
-                  return halA - halB;
-                } else {
-                  return String(a.halaman).localeCompare(String(b.halaman));
-                }
+                if (!isNaN(halA) && !isNaN(halB)) return halA - halB;
+                return String(a.halaman).localeCompare(String(b.halaman));
               })
               .map((m, i) => (
                 <tr key={m.id} className="hover:bg-gray-50">
@@ -287,7 +264,11 @@ export default function IsimodulClient({ user }) {
                   <td className="border px-3 py-1">{m.pertemuan}</td>
                   <td className="border px-3 py-1">
                     {m.gambar && (
-                      <img src={m.gambar} alt="" className="w-16 h-16 object-cover rounded" />
+                      <img
+                        src={m.gambar}
+                        alt=""
+                        className="w-16 h-16 object-cover rounded"
+                      />
                     )}
                   </td>
                   <td className="border px-3 py-1">{m.deskripsi}</td>
@@ -313,7 +294,6 @@ export default function IsimodulClient({ user }) {
                 </tr>
               ))}
           </tbody>
-
         </table>
       </div>
 
@@ -321,9 +301,7 @@ export default function IsimodulClient({ user }) {
       {showModal && (
         <div
           className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) setShowModal(false);
-          }}
+          onClick={(e) => e.target === e.currentTarget && setShowModal(false)}
         >
           <form
             onSubmit={save}
@@ -334,7 +312,7 @@ export default function IsimodulClient({ user }) {
             </h3>
 
             <div className="space-y-2">
-              {/* Dropdown Mata Kuliah */}
+              {/* Mata Kuliah */}
               <select
                 value={form.mata_kuliah}
                 onChange={async (e) => {
@@ -355,7 +333,7 @@ export default function IsimodulClient({ user }) {
                 )}
               </select>
 
-              {/* Dropdown Pertemuan */}
+              {/* Pertemuan */}
               <select
                 value={form.pertemuan}
                 onChange={(e) => setForm({ ...form, pertemuan: e.target.value })}
@@ -389,7 +367,6 @@ export default function IsimodulClient({ user }) {
                 className="w-full border px-3 py-2 rounded"
               />
 
-              {/* Preview Gambar */}
               {previewUrl && (
                 <div className="mt-2">
                   <p className="text-sm text-gray-600">Preview:</p>
@@ -398,12 +375,9 @@ export default function IsimodulClient({ user }) {
                     alt="Preview"
                     className="w-32 h-32 object-cover rounded border"
                   />
-                  {fileName && (
-                    <p className="text-xs text-gray-500 mt-1">File: {fileName}</p>
-                  )}
+                  {fileName && <p className="text-xs text-gray-500 mt-1">File: {fileName}</p>}
                 </div>
               )}
-
 
               {/* Deskripsi */}
               <textarea
@@ -414,7 +388,7 @@ export default function IsimodulClient({ user }) {
                 rows={4}
               />
 
-              {/* Dropdown Halaman */}
+              {/* Halaman */}
               <label className="block mb-2">Halaman</label>
               <select
                 value={form.halaman}

@@ -61,12 +61,13 @@ export default function ModulDetail() {
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
-
       {/* materi */}
       {modul.materi && (
         <div className="mb-6 p-4 border rounded bg-gray-50">
           <h1 className="text-3xl font-bold mb-2">{modul.mata_kuliah}</h1>
-          <p className="text-gray-600 mb-2">{modul.pertemuan} Materi : {modul.materi}</p>
+          <p className="text-gray-600 mb-2">
+            {modul.pertemuan} Materi : {modul.materi}
+          </p>
         </div>
       )}
 
@@ -111,20 +112,22 @@ export default function ModulDetail() {
         <button
           onClick={prevPage}
           disabled={pageIndex === 0}
-          className={`px-4 py-2 rounded-lg border ${pageIndex === 0
-            ? "text-gray-400 border-gray-300 cursor-not-allowed"
-            : "hover:bg-gray-100"
-            }`}
+          className={`px-4 py-2 rounded-lg border ${
+            pageIndex === 0
+              ? "text-gray-400 border-gray-300 cursor-not-allowed"
+              : "hover:bg-gray-100"
+          }`}
         >
           ⬅ Prev
         </button>
         <button
           onClick={nextPage}
           disabled={pageIndex === totalHalaman - 1}
-          className={`px-4 py-2 rounded-lg border ${pageIndex === totalHalaman - 1
-            ? "text-gray-400 border-gray-300 cursor-not-allowed"
-            : "hover:bg-gray-100"
-            }`}
+          className={`px-4 py-2 rounded-lg border ${
+            pageIndex === totalHalaman - 1
+              ? "text-gray-400 border-gray-300 cursor-not-allowed"
+              : "hover:bg-gray-100"
+          }`}
         >
           Next ➡
         </button>

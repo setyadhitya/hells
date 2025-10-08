@@ -1,8 +1,14 @@
 import mysql from "mysql2/promise";
 
-export async function GET(req, { params }) {
+export async function GET(req) {
   try {
-    const { slug } = params; // slug = pertemuan
+    // Ambil slug dari URL
+    const url = new URL(req.url);
+const slug = decodeURIComponent(url.pathname.split("/").pop()); // decode dulu
+
+
+console.log("Slug diterima API:", slug);
+
     const connection = await mysql.createConnection({
       host: "localhost",
       user: "root",
@@ -10,25 +16,27 @@ export async function GET(req, { params }) {
       database: "stern",
     });
 
-    // ambil semua halaman per pertemuan dari tb_isimodul
     const [halamanRows] = await connection.execute(
-      "SELECT id, mata_kuliah, pertemuan, halaman, gambar, deskripsi FROM tb_isimodul WHERE pertemuan = ? ORDER BY CAST(halaman AS UNSIGNED) ASC",
+      `SELECT id, mata_kuliah, pertemuan, halaman, gambar, deskripsi 
+       FROM tb_isimodul 
+       WHERE pertemuan = ? 
+       ORDER BY CAST(halaman AS UNSIGNED) ASC`,
       [slug]
     );
 
     if (halamanRows.length === 0) {
       await connection.end();
-      return new Response(
-        JSON.stringify({ error: "Modul tidak ditemukan" }),
-        { status: 404 }
-      );
+      return new Response(JSON.stringify({ error: "Modul tidak ditemukan" }), {
+        status: 404,
+      });
     }
 
     const mata_kuliah = halamanRows[0].mata_kuliah;
 
-    // ambil materi dari tb_modul sesuai mata_kuliah dan pertemuan
     const [materiRows] = await connection.execute(
-      "SELECT materi FROM tb_modul WHERE mata_kuliah = ? AND pertemuan = ?",
+      `SELECT materi 
+       FROM tb_modul 
+       WHERE mata_kuliah = ? AND pertemuan = ?`,
       [mata_kuliah, slug]
     );
 
@@ -47,12 +55,11 @@ export async function GET(req, { params }) {
       materi: materiRows[0]?.materi || "",
     };
 
-    return Response.json(modul);
+    return new Response(JSON.stringify(modul), { status: 200 });
   } catch (error) {
     console.error("Gagal ambil detail modul:", error);
-    return new Response(
-      JSON.stringify({ error: "Gagal ambil detail modul" }),
-      { status: 500 }
-    );
+    return new Response(JSON.stringify({ error: "Gagal ambil detail modul" }), {
+      status: 500,
+    });
   }
 }

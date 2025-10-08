@@ -1,12 +1,13 @@
-import mysql from 'mysql2/promise';
+import mysql from "mysql2/promise";
 
+// GET semua modul
 export async function GET() {
   try {
     const connection = await mysql.createConnection({
-      host: 'localhost',
-      user: 'root',
-      password: '',
-      database: 'stern'
+      host: "localhost",
+      user: "root",
+      password: "",
+      database: "stern",
     });
 
     const [rows] = await connection.execute(`
@@ -17,22 +18,26 @@ export async function GET() {
 
     await connection.end();
 
-    return Response.json(rows);
-
+    return new Response(JSON.stringify(rows), { status: 200 });
   } catch (error) {
-    console.error('Gagal ambil data modul:', error);
-    return new Response(JSON.stringify({ error: 'Gagal ambil data modul' }), { status: 500 });
+    console.error("Gagal ambil data modul:", error);
+    return new Response(
+      JSON.stringify({ error: "Gagal ambil data modul" }),
+      { status: 500 }
+    );
   }
 }
 
+// POST tambah modul baru
 export async function POST(req) {
   try {
     const body = await req.json();
+
     const connection = await mysql.createConnection({
-      host: 'localhost',
-      user: 'root',
-      password: '',
-      database: 'stern'
+      host: "localhost",
+      user: "root",
+      password: "",
+      database: "stern",
     });
 
     const [result] = await connection.execute(
@@ -42,10 +47,14 @@ export async function POST(req) {
 
     await connection.end();
 
-    return Response.json({ success: true, id: result.insertId });
-
+    return new Response(JSON.stringify({ success: true, id: result.insertId }), {
+      status: 201,
+    });
   } catch (error) {
-    console.error('Gagal tambah modul:', error);
-    return new Response(JSON.stringify({ error: 'Gagal tambah modul' }), { status: 500 });
+    console.error("Gagal tambah modul:", error);
+    return new Response(
+      JSON.stringify({ error: "Gagal tambah modul" }),
+      { status: 500 }
+    );
   }
 }
