@@ -39,7 +39,7 @@ export default function JadwalPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-50 p-6 md:p-8">
+    <main className="min-h-screen bg-gray-50 p-6 md:p-8 bg-gradient-to-br from-blue-50 via-white to-indigo-100 text-gray-800 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 dark:text-gray-100">
       <h1 className="text-3xl font-bold mb-6 text-gray-800 text-center">Jadwal Praktikum</h1>
 
       {/* Legend warna semester */}

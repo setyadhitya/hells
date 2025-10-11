@@ -1,45 +1,51 @@
-/* app/page.tsx */
-'use client'
+"use client";
 
-import Link from 'next/link'
-import { motion } from 'framer-motion'
-import { AirVent, BookOpen, Users, ClipboardList, LayoutDashboard, FileText } from 'lucide-react'
+import Link from "next/link";
+import { motion } from "framer-motion";
+import {
+  AirVent,
+  BookOpen,
+  LayoutDashboard,
+  FileText,
+} from "lucide-react";
 
 export default function Home() {
   const navItems = [
-    { name: 'Jadwal Praktikum', href: '/jadwal', icon: LayoutDashboard },
-    { name: 'Modul Praktikum', href: '/modul', icon: BookOpen },
-    { name: 'Akun Asisten', href: '/akun_assisten', icon: AirVent },
-    { name: 'Akun Mahasiswa', href: '/login', icon: FileText },
-  ]
+    { name: "Jadwal Praktikum", href: "/jadwal", icon: LayoutDashboard },
+    { name: "Modul Praktikum", href: "/modul", icon: BookOpen },
+    { name: "Akun Asisten", href: "/akun_assisten", icon: AirVent },
+    { name: "Akun Mahasiswa", href: "/login", icon: FileText },
+  ];
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-100 text-gray-800">
-
+    <main className="min-h-screen flex flex-col justify-between bg-gradient-to-br from-blue-50 via-white to-indigo-100 text-gray-800 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 dark:text-gray-100">
       {/* Hero Section */}
-      <section className="py-24 text-center relative overflow-hidden">
+      <section className="py-12 text-center relative overflow-hidden">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
         >
           <h2 className="text-5xl font-extrabold text-gray-800 mb-6 drop-shadow-sm">
-            Selamat Datang di <span className="text-blue-700 bg-blue-100 px-2 rounded-lg">LabKom 3</span>
+            Selamat Datang di{" "}
+            <span className="text-blue-700 bg-blue-100 px-2 rounded-lg shadow-sm">
+              LabKom 3
+            </span>
           </h2>
           <p className="text-gray-600 max-w-2xl mx-auto text-lg leading-relaxed">
             Akses seluruh layanan praktikum dengan cepat, terintegrasi, dan tanpa basa-basi.
           </p>
         </motion.div>
 
-        {/* Background decorative blur */}
-        <div className="absolute -top-10 -right-20 w-72 h-72 bg-blue-200/50 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-0 -left-20 w-72 h-72 bg-indigo-200/40 rounded-full blur-3xl"></div>
+        {/* Background Decorative Elements */}
+        <div className="absolute -top-20 -right-32 w-96 h-96 bg-blue-200/40 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-0 -left-32 w-96 h-96 bg-indigo-200/30 rounded-full blur-3xl"></div>
       </section>
 
       {/* Menu Cards */}
       <section className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 px-6 pb-24">
         {navItems.map((item, i) => {
-          const Icon = item.icon
+          const Icon = item.icon;
           return (
             <motion.div
               key={item.name}
@@ -50,13 +56,15 @@ export default function Home() {
             >
               <Link
                 href={item.href}
-                className="block bg-white/70 backdrop-blur-md border border-gray-200 rounded-2xl 
+                className="group block bg-white/70 backdrop-blur-md border border-gray-200 rounded-2xl 
                 shadow-md hover:shadow-2xl hover:-translate-y-1 transition-all p-8 
-                group hover:bg-gradient-to-br hover:from-blue-50 hover:to-indigo-50"
+                hover:bg-gradient-to-br hover:from-blue-50 hover:to-indigo-50"
               >
-                {/* Icon Circle */}
-                <div className="w-14 h-14 flex items-center justify-center rounded-xl bg-blue-100 text-blue-600 
-                mb-5 group-hover:bg-blue-600 group-hover:text-white transition-all duration-300 shadow-inner">
+                {/* Icon */}
+                <div
+                  className="w-14 h-14 flex items-center justify-center rounded-xl bg-blue-100 text-blue-600 
+                  mb-5 group-hover:bg-blue-600 group-hover:text-white transition-all duration-300 shadow-inner"
+                >
                   <Icon size={28} />
                 </div>
 
@@ -68,15 +76,15 @@ export default function Home() {
                 </p>
               </Link>
             </motion.div>
-          )
+          );
         })}
       </section>
 
       {/* Footer */}
       <footer className="text-center text-sm text-gray-600 py-6 border-t bg-white/60 backdrop-blur-md">
-        <strong>© 2025 LabKom 3 Jaringan</strong> • Dibuat penuh semangat oleh{' '}
+        <strong>© 2025 LabKom 3 Jaringan</strong> • Dibuat penuh semangat oleh{" "}
         <span className="text-blue-700 font-medium">PLP</span>
       </footer>
     </main>
-  )
+  );
 }
