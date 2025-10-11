@@ -306,7 +306,7 @@ export default function AssistenClient({ user }) {
                 className="w-full border px-3 py-2 rounded mb-3"
               >
                 <option value="Aktif">Aktif</option>
-                <option value="Expired">Expired</option>
+                <option value="nonaktif">nonaktif</option>
               </select>
             )}
 

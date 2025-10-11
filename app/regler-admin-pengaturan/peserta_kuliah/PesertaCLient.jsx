@@ -77,6 +77,11 @@ export default function PesertaClient({ user }) {
   };
 
   return (
+    <main className="max-w-2xl mx-auto py-10">
+      <h1 className="text-2xl font-bold">Daftar Peserta Kuliah</h1>
+      <p className="text-gray-600 mt-2">
+        Halo, {user?.username} — role: {user?.role}
+      </p>
     <div className="relative p-2">
       <button
         onClick={() => setShowModal(true)}
@@ -86,7 +91,7 @@ export default function PesertaClient({ user }) {
       </button>
 
       <div className="overflow-x-auto">
-        <table className="min-w-full border border-gray-300">
+        <table className="w-full mt-4 border border-gray-300 text-sm">
           <thead className="bg-gray-100">
             <tr>
               <th className="border px-3 py-2">No</th>
@@ -200,5 +205,6 @@ export default function PesertaClient({ user }) {
         </div>
       )}
     </div>
+    </main>
   );
 }

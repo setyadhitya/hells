@@ -149,7 +149,7 @@ export default function PraktikumClient({ user }) {
   }
 
   return (
-    <main className="max-w-xl mx-auto py-10">
+    <main className="max-w-2xl mx-auto py-10">
       <h1 className="text-2xl font-bold">Praktikum</h1>
       <p className="mt-2 text-gray-700">
         Halo, {user.username} — role: {user.role}
@@ -166,7 +166,7 @@ export default function PraktikumClient({ user }) {
       )}
 
       <div className="w-full mt-4">
-  <table className="w-full table-auto border border-gray-300">
+  <table className="w-full mt-4 border border-gray-300 text-sm">
 
           <thead className="bg-gray-100">
             <tr>
