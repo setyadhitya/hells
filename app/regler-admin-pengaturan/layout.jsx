@@ -14,6 +14,10 @@ export default function AdminLayout({ children }) {
     router.push("/regler-admin-pengaturan/login");
   };
 
+  const homeee = async () => {
+    router.push("/");
+  };
+
   return (
     <>
       {/* Bagian atas yang selalu tampil */}
@@ -40,6 +44,13 @@ export default function AdminLayout({ children }) {
           className="mt-6 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
         >
           Logout
+        </button>
+
+        <button
+          onClick={homeee}
+          className="mt-6 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
+        >
+          Halaman User
         </button>
       </header>
 

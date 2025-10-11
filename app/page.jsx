@@ -29,11 +29,11 @@ export default function Home() {
           <h2 className="text-5xl font-extrabold text-gray-800 mb-6 drop-shadow-sm">
             Selamat Datang di{" "}
             <span className="text-blue-700 bg-blue-100 px-2 rounded-lg shadow-sm">
-              LabKom 3
+              Sys-ASLPDC-T2B2
             </span>
           </h2>
           <p className="text-gray-600 max-w-2xl mx-auto text-lg leading-relaxed">
-            Akses seluruh layanan praktikum dengan cepat, terintegrasi, dan tanpa basa-basi.
+            Sistem Akses Seluruh Layanan Praktikum Dengan Cepat, Terintegrasi, Dan Tanpa Basa-Basi.
           </p>
         </motion.div>
 
@@ -82,8 +82,8 @@ export default function Home() {
 
       {/* Footer */}
       <footer className="text-center text-sm text-gray-600 py-6 border-t bg-white/60 backdrop-blur-md">
-        <strong>© 2025 LabKom 3 Jaringan</strong> • Dibuat penuh semangat oleh{" "}
-        <span className="text-blue-700 font-medium">PLP</span>
+        <strong>© 2025 LabKom 3 Jaringan</strong> • Dibuat setengah semangat oleh{" "}
+        <span className="text-blue-700 font-medium">PLP</span>{" "}• Lab 3 Jaringan Komputer
       </footer>
     </main>
   );
