@@ -26,8 +26,6 @@ export default function AdminLayout({ children }) {
             <li><Link href="/regler-admin-pengaturan/praktikum" className="underline">Praktikum</Link></li>
             <li><Link href="/regler-admin-pengaturan/modul" className="underline">Modul</Link></li>
             <li><Link href="/regler-admin-pengaturan/isimodul" className="underline">Isi Modul</Link></li>
-            <li><Link href="/regler-admin-pengaturan/peminjaman" className="underline">Peminjaman</Link></li>
-            <li><Link href="/regler-admin-pengaturan/kalender" className="underline">Kalender</Link></li>
             <li><Link href="/regler-admin-pengaturan/akun" className="underline">Akun</Link></li>
             <li><Link href="/regler-admin-pengaturan/rekap" className="underline">Rekap Presensi</Link></li>
             <li><Link href="/regler-admin-pengaturan/peserta_kuliah" className="underline">Peserta Kuliah</Link></li>
