@@ -2,8 +2,8 @@ import './globals.css'
 import DarkModeToggle from './DarkModeToggle'
 
 export const metadata = {
-  title: 'Next Tailwind Starter',
-  description: 'Tailwind ready Next.js app',
+  title: 'Lab. 3 Jaringan Komputer',
+  description: 'Aplikasi layanan praktikum terintegrasi',
 }
 
 export default function RootLayout({ children }) {
