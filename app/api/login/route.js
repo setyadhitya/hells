@@ -93,8 +93,8 @@ export async function POST(req) {
     // 🍪 Simpan di cookie aman
     cookies().set("token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "Strict",
+      secure: true,
+      sameSite: "none",
       path: "/",
       maxAge: 8 * 3600, // 8 jam
     });

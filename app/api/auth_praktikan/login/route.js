@@ -51,8 +51,8 @@ export async function POST(req) {
     // 🔹 Simpan token ke cookie
     res.cookies.set("token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
+      secure: true,
+      sameSite: "none",
       path: "/",
       maxAge: 60 * 60, // 1 jam
     });

@@ -31,6 +31,7 @@ export default function AdminLayout({ children }) {
             <li><Link href="/regler-admin-pengaturan/akun" className="underline">Akun</Link></li>
             <li><Link href="/regler-admin-pengaturan/rekap" className="underline">Rekap Presensi</Link></li>
             <li><Link href="/regler-admin-pengaturan/peserta_kuliah" className="underline">Peserta Kuliah</Link></li>
+            <li><Link href="/regler-admin-pengaturan/assisten" className="underline">Assisten</Link></li>
             <li><Link href="/regler-admin-pengaturan/approve" className="underline">Approve Praktikan</Link></li>
           </ul>
         </nav>

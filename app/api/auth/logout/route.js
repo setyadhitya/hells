@@ -10,8 +10,8 @@ export async function POST() {
     value: "",
     path: "/",
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
+    secure: true,
+    sameSite: "none",
     expires: new Date(0), // <- ini lebih aman daripada maxAge: 0
   });
 

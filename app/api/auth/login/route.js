@@ -36,12 +36,13 @@ export async function POST(req) {
     });
 
     res.cookies.set("token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      path: "/",
-      maxAge: 60 * 60,
-    });
+  httpOnly: true,
+  secure: true,        // ✅ wajib true kalau pakai https://localhost
+  sameSite: "none",    // ✅ agar bisa dikirim di semua fetch
+  path: "/",
+  maxAge: 60 * 60,
+});
+
 
     return res;
   } catch (err) {
