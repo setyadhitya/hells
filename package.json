@@ -17,6 +17,8 @@
     "https": "^1.0.0",
     "jose": "^6.1.0",
     "jsonwebtoken": "^9.0.2",
+    "jspdf": "^3.0.3",
+    "jspdf-autotable": "^5.0.2",
     "jwt-decode": "^4.0.0",
     "lucide-react": "^0.541.0",
     "mysql2": "^3.14.3",
