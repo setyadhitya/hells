@@ -1,25 +1,47 @@
 "use client";
 import { useEffect, useState } from "react";
 
+// 🔹 Fungsi bantu untuk ambil cookie CSRF
+function getCookie(name) {
+  const m = document.cookie.match(new RegExp("(^| )" + name + "=([^;]+)"));
+  return m ? m[2] : null;
+}
+
 export default function PesertaClient({ user }) {
   const [list, setList] = useState([]);
   const [dropdown, setDropdown] = useState({ praktikan: [], praktikum: [] });
   const [praktikumId, setPraktikumId] = useState("");
   const [praktikanList, setPraktikanList] = useState([{ praktikan_id: "" }]);
   const [showModal, setShowModal] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  // Load daftar peserta
+  // 🔹 Ambil daftar peserta
   const loadData = async () => {
-    const res = await fetch("/api/admin/peserta_kuliah", { cache: "no-store" });
-    const data = await res.json();
-    setList(data);
+    setLoading(true);
+    try {
+      const res = await fetch("/api/admin/peserta_kuliah", { credentials: "include" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Gagal memuat data");
+      setList(data);
+    } catch (err) {
+      console.error("Fetch peserta error:", err);
+      alert("Gagal mengambil data peserta");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // Load dropdown praktikan & praktikum
+  // 🔹 Ambil dropdown praktikan & praktikum
   const loadDropdown = async () => {
-    const res = await fetch("/api/admin/peserta_kuliah/dropdown", { cache: "no-store" });
-    const data = await res.json();
-    setDropdown(data);
+    try {
+      const res = await fetch("/api/admin/peserta_kuliah/dropdown", { credentials: "include" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Gagal memuat dropdown");
+      setDropdown(data);
+    } catch (err) {
+      console.error("Dropdown error:", err);
+      alert("Gagal memuat daftar praktikan atau praktikum");
+    }
   };
 
   useEffect(() => {
@@ -27,24 +49,25 @@ export default function PesertaClient({ user }) {
     loadDropdown();
   }, []);
 
-  // Tambah / hapus field praktikan
+  // 🔹 Tambah atau hapus field input praktikan
   const addPraktikanField = () => setPraktikanList([...praktikanList, { praktikan_id: "" }]);
-  const removePraktikanField = (index) => {
+  const removePraktikanField = (i) => {
     const newList = [...praktikanList];
-    newList.splice(index, 1);
+    newList.splice(i, 1);
     setPraktikanList(newList);
   };
 
-  const handlePraktikanChange = (index, value) => {
+  // 🔹 Ganti nilai praktikan di dropdown
+  const handlePraktikanChange = (i, val) => {
     const newList = [...praktikanList];
-    newList[index].praktikan_id = value;
+    newList[i].praktikan_id = val;
     setPraktikanList(newList);
   };
 
-  // Simpan peserta
+  // 🔹 Simpan peserta (POST)
   const save = async (e) => {
     e.preventDefault();
-    if (!praktikumId) return alert("Pilih praktikum dulu");
+    if (!praktikumId) return alert("Pilih praktikum terlebih dahulu");
 
     const body = praktikanList.map((p) => ({
       praktikan_id: p.praktikan_id,
@@ -54,26 +77,53 @@ export default function PesertaClient({ user }) {
     try {
       const res = await fetch("/api/admin/peserta_kuliah", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        credentials: "include", // 🧩 kirim cookie JWT
+        headers: {
+          "Content-Type": "application/json",
+          "x-csrf-token": getCookie("csrf_token"), // 🧩 kirim CSRF token
+        },
         body: JSON.stringify(body),
       });
+
       const result = await res.json();
-      if (!res.ok || result.error) return alert(result.error);
-      alert("Peserta berhasil ditambahkan");
+      if (!res.ok || result.error) {
+        alert(result.error || result.message || "Gagal menyimpan data");
+        return;
+      }
+
+      alert(result.message || "Peserta berhasil ditambahkan");
       setShowModal(false);
       setPraktikumId("");
       setPraktikanList([{ praktikan_id: "" }]);
       loadData();
     } catch (err) {
-      console.error(err);
-      alert("Gagal menambahkan peserta");
+      console.error("Save peserta error:", err);
+      alert("Terjadi kesalahan jaringan");
     }
   };
 
+  // 🔹 Hapus peserta
   const del = async (id) => {
-    if (!confirm("Hapus peserta ini?")) return;
-    const res = await fetch(`/api/admin/peserta_kuliah?id=${id}`, { method: "DELETE" });
-    if (res.ok) loadData();
+    if (!confirm("Yakin ingin menghapus peserta ini?")) return;
+    try {
+      const res = await fetch(`/api/admin/peserta_kuliah?id=${id}`, {
+        method: "DELETE",
+        credentials: "include",
+        headers: {
+          "x-csrf-token": getCookie("csrf_token"),
+        },
+      });
+      const result = await res.json();
+      if (!res.ok) {
+        alert(result.error || result.message || "Gagal menghapus");
+        return;
+      }
+      alert(result.message || "Berhasil dihapus");
+      loadData();
+    } catch (err) {
+      console.error("Delete error:", err);
+      alert("Terjadi kesalahan jaringan");
+    }
   };
 
   return (
@@ -82,15 +132,21 @@ export default function PesertaClient({ user }) {
       <p className="text-gray-600 mt-2">
         Halo, {user?.username} — role: {user?.role}
       </p>
-    <div className="relative p-2">
-      <button
-        onClick={() => setShowModal(true)}
-        className="mb-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-      >
-        Tambah Peserta
-      </button>
 
-      <div className="overflow-x-auto">
+      {/* 🔹 Tombol Tambah */}
+      {(user.role === "admin" || user.role === "laboran") && (
+        <button
+          onClick={() => setShowModal(true)}
+          className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+        >
+          Tambah Peserta
+        </button>
+      )}
+
+      {/* 🔹 Daftar Peserta */}
+      {loading ? (
+        <p className="mt-4 text-gray-500">Memuat data...</p>
+      ) : (
         <table className="w-full mt-4 border border-gray-300 text-sm">
           <thead className="bg-gray-100">
             <tr>
@@ -122,9 +178,9 @@ export default function PesertaClient({ user }) {
             ))}
           </tbody>
         </table>
-      </div>
+      )}
 
-      {/* Modal Tambah Peserta */}
+      {/* 🔹 Modal Tambah Peserta */}
       {showModal && (
         <div
           className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50"
@@ -137,20 +193,18 @@ export default function PesertaClient({ user }) {
             <h3 className="text-xl font-semibold mb-4">Tambah Peserta Kuliah</h3>
 
             {/* Dropdown Praktikum */}
-            <div className="mb-4">
-              <label className="block font-semibold mb-1">Praktikum</label>
-              <select
-                value={praktikumId}
-                onChange={(e) => setPraktikumId(e.target.value)}
-                className="w-full border p-2 rounded"
-                required
-              >
-                <option value="">-- Pilih Praktikum --</option>
-                {dropdown.praktikum.map((p) => (
-                  <option key={p.id} value={p.id}>{p.mata_kuliah}</option>
-                ))}
-              </select>
-            </div>
+            <label className="block mb-2 font-semibold">Praktikum</label>
+            <select
+              value={praktikumId}
+              onChange={(e) => setPraktikumId(e.target.value)}
+              className="w-full border px-3 py-2 rounded mb-4"
+              required
+            >
+              <option value="">-- Pilih Praktikum --</option>
+              {dropdown.praktikum.map((p) => (
+                <option key={p.id} value={p.id}>{p.mata_kuliah}</option>
+              ))}
+            </select>
 
             {/* Multi Praktikan */}
             {praktikanList.map((p, i) => (
@@ -204,7 +258,6 @@ export default function PesertaClient({ user }) {
           </form>
         </div>
       )}
-    </div>
     </main>
   );
 }
