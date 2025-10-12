@@ -1,45 +1,61 @@
 // app/api/assisten/route.js
 import mysql from "mysql2/promise";
-import { cookies } from "next/headers";
-import { verifyToken } from "../../../lib/auth";
+import { secureHandler } from "../../../lib/secureApi"; // ✅ Gunakan middleware keamanan
 
-export async function GET() {
-  try {
-    // Ambil token dari cookies
-    const cookieStore = await cookies();
-    const token = cookieStore.get("token")?.value || null;
-    const user = token ? await verifyToken(token) : null;
+// 🔹 Fungsi koneksi database
+async function getConnection() {
+  return await mysql.createConnection({
+    host: "localhost",
+    user: "root",
+    password: "",
+    database: "stern",
+  });
+}
 
-    if (!user) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
+// ==================== 🔹 GET — Ambil data profil asisten ====================
+export async function GET(req) {
+  return secureHandler(req, {
+    requireAuth: true,  // ✅ hanya user login yang boleh akses
+    rateLimit: true,    // ✅ batasi request per menit
+    handler: async ({ user, ip, logAudit }) => {
+      // 🔹 Pastikan role sesuai
+      if (user.role !== "assisten") {
+        return new Response(
+          JSON.stringify({ error: "Akses hanya untuk asisten" }),
+          { status: 403 }
+        );
+      }
+
+      const conn = await getConnection();
+
+      // 🔹 Ambil data berdasarkan username dari token
+      const [rows] = await conn.execute(
+        "SELECT id, username, nama, nim, nomorhp, status FROM tb_assisten WHERE username = ?",
+        [user.username]
+      );
+      await conn.end();
+
+      if (rows.length === 0) {
+        return new Response(
+          JSON.stringify({ error: "Data asisten tidak ditemukan" }),
+          { status: 404 }
+        );
+      }
+
+      const asisten = rows[0];
+
+      // 🪵 Catat aktivitas
+      await logAudit({
+        userId: user.id,
+        username: user.username,
+        action: "get_profile_assisten",
+        ip,
       });
-    }
 
-    const connection = await mysql.createConnection({
-      host: "localhost",
-      user: "root",
-      password: "",
-      database: "stern",
-    });
-
-    // Ambil data dari tb_assisten berdasarkan username dari token
-    const [rows] = await connection.execute(
-      "SELECT id, username, nama, nim, nomorhp, status FROM tb_assisten WHERE username = ?",
-      [user.username]
-    );
-
-    await connection.end();
-
-    if (rows.length === 0) {
-      return new Response(JSON.stringify({ error: "Assisten tidak ditemukan" }), {
-        status: 404,
+      return new Response(JSON.stringify(asisten), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
       });
-    }
-
-    return new Response(JSON.stringify(rows[0]), { status: 200 });
-  } catch (err) {
-    console.error(err);
-    return new Response(JSON.stringify({ error: "Server error" }), { status: 500 });
-  }
+    },
+  });
 }
