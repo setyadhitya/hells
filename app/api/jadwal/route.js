@@ -9,9 +9,31 @@ export async function GET() {
       database: "stern",
     });
 
+    // 🔹 Ambil data praktikum + peserta + asisten
     const [rows] = await connection.execute(`
-      SELECT id, mata_kuliah, jurusan, kelas, semester, hari, jam_mulai, jam_ahir, shift, assisten, catatan
-      FROM tb_praktikum
+      SELECT 
+        p.id,
+        p.mata_kuliah,
+        p.jurusan,
+        p.kelas,
+        p.semester,
+        p.hari,
+        p.jam_mulai,
+        p.jam_ahir,
+        p.shift,
+        p.catatan,
+        COUNT(DISTINCT ps.id) AS peserta,
+        GROUP_CONCAT(DISTINCT pr.nama ORDER BY pr.nama SEPARATOR ', ') AS daftar_peserta,
+        GROUP_CONCAT(DISTINCT a.nama ORDER BY a.nama SEPARATOR ', ') AS daftar_assisten
+      FROM tb_praktikum p
+      LEFT JOIN tb_peserta ps ON ps.praktikum_id = p.id
+      LEFT JOIN tb_praktikan pr ON pr.id = ps.praktikan_id
+      LEFT JOIN tb_assisten_praktikum ap ON ap.praktikum_id = p.id
+      LEFT JOIN tb_assisten a ON a.id = ap.assisten_id
+      GROUP BY 
+        p.id, p.mata_kuliah, p.jurusan, p.kelas, p.semester, 
+        p.hari, p.jam_mulai, p.jam_ahir, p.shift, p.catatan
+      ORDER BY p.shift, p.hari
     `);
 
     await connection.end();
@@ -19,9 +41,7 @@ export async function GET() {
     const shifts = ["I", "II", "III", "IV", "V"];
     const hariKerja = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat"];
 
-    // Buat struktur kosong
     const jadwalMap = {};
-
     shifts.forEach((s) => {
       jadwalMap[`Shift ${s}`] = {};
       hariKerja.forEach((h) => {
@@ -29,18 +49,19 @@ export async function GET() {
       });
     });
 
-    // Isi data dari database
+    // Isi data
     rows.forEach((item) => {
       if (!item.shift || !item.hari) return;
 
-      // Normalisasi shift, misal "shift IV" → "Shift IV"
-      const shiftKey = item.shift.trim().toUpperCase().replace("SHIFT", "Shift").replace("  ", " ");
+      const shiftKey = item.shift.trim().toUpperCase().replace("SHIFT", "Shift");
       const hariKey = item.hari.trim();
 
-      if (!jadwalMap[shiftKey]) {
-        jadwalMap[shiftKey] = {};
-      }
-      jadwalMap[shiftKey][hariKey] = item;
+      jadwalMap[shiftKey][hariKey] = {
+        ...item,
+        peserta: Number(item.peserta) || 0,
+        daftar_peserta: item.daftar_peserta || "",
+        daftar_assisten: item.daftar_assisten || "",
+      };
     });
 
     return Response.json(jadwalMap);

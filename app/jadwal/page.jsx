@@ -103,8 +103,30 @@ export default function JadwalPage() {
             <p><strong>Kelas:</strong> {selected.kelas}</p>
             <p><strong>Semester:</strong> {selected.semester}</p>
             <p><strong>Jam:</strong> {selected.jam_mulai} - {selected.jam_ahir}</p>
-            <p><strong>Assisten:</strong> {selected.assisten}</p>
+            <p><strong>Assisten:</strong></p>
+            <div className="max-h-24 overflow-y-auto border p-2 rounded text-sm mb-2">
+              {selected.daftar_assisten
+                ? selected.daftar_assisten
+                  .split(",")
+                  .map((nama, i) => (
+                    <p key={i}>{i + 1}. {nama.trim()}{i === selected.daftar_assisten.split(",").length - 1 ? "." : ","}</p>
+                  ))
+                : "-"}
+            </div>
+            <p><strong>Peserta:</strong> {selected.peserta || '-'}</p>
+            <p><strong>Nama Peserta:</strong></p>
+            <div className="max-h-32 overflow-y-auto border p-2 rounded text-sm">
+              {selected.daftar_peserta
+                ? selected.daftar_peserta
+                  .split(",") // Pisahkan berdasarkan koma
+                  .map((nama, i) => (
+                    <p key={i}>{i + 1}. {nama.trim()}{i === selected.daftar_peserta.split(",").length - 1 ? "." : ","}</p>
+                  ))
+                : "-"}
+            </div>
+
             <p><strong>Catatan:</strong> {selected.catatan || '-'}</p>
+
             <button
               onClick={handleClose}
               className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 font-bold text-lg"
