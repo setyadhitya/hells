@@ -1,3 +1,4 @@
+// server.js
 import fs from "fs";
 import https from "https";
 import next from "next";
@@ -11,7 +12,7 @@ const __dirname = path.resolve();
 
 const options = {
   key: fs.readFileSync(path.join(__dirname, "cert/localhost-key.pem")),
-  cert: fs.readFileSync(path.join(__dirname, "cert/localhost.pem")),
+  cert: fs.readFileSync(path.join(__dirname, "cert/localhost.crt")),
 };
 
 app.prepare().then(() => {

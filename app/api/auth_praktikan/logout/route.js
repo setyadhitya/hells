@@ -1,16 +1,16 @@
-import { NextResponse } from "next/server"
+import { NextResponse } from "next/server";
 
 export async function POST() {
-  const res = NextResponse.json({ message: "Logged out" })
+  const res = NextResponse.json({ message: "Logout berhasil" });
+  const isProd = process.env.NODE_ENV === "production";
 
-  // hapus cookie
   res.cookies.set("token", "", {
     httpOnly: true,
-    secure: true,
-    sameSite: "none",
-    maxAge: 0,
+    secure: isProd,
+    sameSite: isProd ? "none" : "lax",
     path: "/",
-  })
+    maxAge: 0,
+  });
 
-  return res
+  return res;
 }

@@ -1,23 +1,25 @@
+// app/presensi/page.jsx
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { verifyToken } from "../../lib/auth";
 import PageClient from "./PageClient";
 
+/**
+ * 🌐 Halaman Presensi
+ * - Hanya bisa diakses oleh praktikan yang sudah login
+ */
 export default async function PresensiPage() {
   const cookieStore = await cookies();
   const token = cookieStore.get("token")?.value || null;
   const user = token ? await verifyToken(token) : null;
 
-  // 🔹 Kalau belum login → redirect ke login admin
   if (!user) {
-    redirect("/login"); // cukup redirect dari next/navigation
+    redirect("/login"); // jika belum login
   }
 
-  // 🔹 Kalau role bukan praktikan → redirect ke dashboard admin
   if (user.role !== "praktikan") {
-    redirect("/regler-admin-pengaturan/dashboard");
+    redirect("/"); // jika bukan praktikan
   }
 
-  // ✅ Render client page
   return <PageClient user={user} />;
 }

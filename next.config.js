@@ -34,9 +34,9 @@ const nextConfig = {
           // 🎯 Batasi akses hardware browser
           {
             key: "Permissions-Policy",
-            value:
-              "camera=(), microphone=(), geolocation=(), interest-cohort=(), fullscreen=()",
+            value: "geolocation=(self), camera=(), microphone=(), interest-cohort=(), fullscreen=(self)",
           },
+
 
           // 🧱 Paksa HTTPS untuk semua subdomain
           {
