@@ -1,22 +1,22 @@
 // app/login_assisten/page.jsx
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { verifyToken } from "../../lib/auth"; // fungsi verifikasi JWT/token
+import { verifyToken } from "../../lib/auth"; // fungsi JWT verifier
 import LoginForm from "./LoginForm";
 
 export default async function LoginAssistenPage() {
-  // 🔹 Ambil cookie token dari request
+  // 🔹 Ambil cookie token dari browser
   const cookieStore = await cookies();
   const token = cookieStore.get("token")?.value || null;
 
   // 🔹 Verifikasi token (jika ada)
   const user = token ? await verifyToken(token) : null;
 
-  // 🔹 Kalau sudah login → redirect ke akun assisten
-  if (user) {
-    redirect("/akun-assisten");
+  // 🔹 Jika user sudah login → redirect ke halaman akun
+  if (user && user.role === "assisten") {
+    redirect("/akun_assisten");
   }
 
-  // 🔹 Kalau belum login → render form login
+  // 🔹 Jika belum login → tampilkan form login
   return <LoginForm />;
 }
