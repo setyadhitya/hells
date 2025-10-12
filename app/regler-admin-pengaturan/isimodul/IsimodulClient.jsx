@@ -3,89 +3,79 @@
 import { useState, useEffect } from "react";
 
 export default function IsimodulClient({ user }) {
-  const [filterMataKuliah, setFilterMataKuliah] = useState("");
-  const [filterPertemuan, setFilterPertemuan] = useState("");
-  const [pertemuanOptions, setPertemuanOptions] = useState([]);
+  const [list, setList] = useState([]);
+  const [modulList, setModulList] = useState([]);
+  const [showModal, setShowModal] = useState(false);
+  const [editId, setEditId] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
   const [fileName, setFileName] = useState("");
+  const [search, setSearch] = useState("");
+  const [filterMataKuliah, setFilterMataKuliah] = useState("");
+  const [filterPertemuan, setFilterPertemuan] = useState("");
 
-  const [list, setList] = useState([]);
   const [form, setForm] = useState({
-    mata_kuliah: "",
-    pertemuan: "",
-    gambar: null,
-    deskripsi: "",
+    modul_id: "",
     halaman: "",
+    deskripsi: "",
+    gambar: null,
   });
-  const [editId, setEditId] = useState(null);
-  const [showModal, setShowModal] = useState(false);
-  const [modulList, setModulList] = useState([]);
-  const [pertemuanList, setPertemuanList] = useState([]);
+
   const halamanList = Array.from({ length: 50 }, (_, i) => i + 1);
 
-  // 🔹 Load semua isi modul
+  // 🔹 Ambil semua data isi modul
   const loadData = async () => {
-    const res = await fetch("/api/admin/isimodul", { cache: "no-store" });
-    const data = await res.json();
-    setList(data);
+    try {
+      const res = await fetch("/api/admin/isimodul", { cache: "no-store" });
+      const data = await res.json();
+      if (!res.ok || !Array.isArray(data)) {
+        console.error("Data isi modul tidak valid:", data);
+        setList([]);
+        return;
+      }
+      setList(data);
+    } catch (err) {
+      console.error("Gagal memuat isi modul:", err);
+      setList([]);
+    }
   };
 
   // 🔹 Ambil daftar modul
-  const loadModul = async () => {
-    const res = await fetch("/api/admin/modul", { cache: "no-store" });
-    const data = await res.json();
-    setModulList(data);
-  };
-
-  // 🔹 Ambil pertemuan sesuai mata kuliah
-  const loadPertemuan = async (mk) => {
-    if (!mk) {
-      setPertemuanList([]);
-      return [];
+  const loadModulList = async () => {
+    try {
+      const res = await fetch("/api/admin/modul", { cache: "no-store" });
+      const data = await res.json();
+      if (Array.isArray(data)) setModulList(data);
+      else console.error("Data modul tidak valid:", data);
+    } catch (err) {
+      console.error("Gagal memuat modul:", err);
     }
-    const res = await fetch("/api/admin/pertemuan", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ mata_kuliah: mk }),
-    });
-    const data = await res.json();
-    // Pastikan array string
-    const perts = Array.isArray(data)
-      ? data.map((r) => (r.pertemuan ?? r).toString().trim())
-      : [];
-    setPertemuanList(perts);
-    return perts;
   };
 
   useEffect(() => {
     loadData();
-    loadModul();
+    loadModulList();
   }, []);
 
-  // 🔹 Save (Tambah / Update)
+  // 🔹 Simpan data (Tambah / Update)
   const save = async (e) => {
     e.preventDefault();
 
     // Cek duplikasi
     const exists = list.find(
       (item) =>
-        item.mata_kuliah === form.mata_kuliah &&
-        item.pertemuan === form.pertemuan &&
-        item.halaman === form.halaman &&
+        item.modul_id == form.modul_id &&
+        item.halaman == form.halaman &&
         item.id !== editId
     );
     if (exists) {
-      alert(
-        "Data dengan Mata Kuliah, Pertemuan, dan Halaman ini sudah ada! Gunakan halaman berbeda."
-      );
+      alert("Halaman ini sudah ada untuk modul tersebut!");
       return;
     }
 
     const fd = new FormData();
-    fd.append("mata_kuliah", form.mata_kuliah);
-    fd.append("pertemuan", form.pertemuan);
+    fd.append("modul_id", form.modul_id);
+    fd.append("halaman", form.halaman);
     fd.append("deskripsi", form.deskripsi);
-    fd.append("halaman", form.halaman || "");
     if (form.gambar instanceof File) fd.append("gambar", form.gambar);
 
     let url = "/api/admin/isimodul";
@@ -97,8 +87,9 @@ export default function IsimodulClient({ user }) {
 
     const res = await fetch(url, { method, body: fd });
     const result = await res.json();
+
     if (!res.ok || result.error) {
-      alert(result.error || "Terjadi kesalahan");
+      alert(result.error || "Terjadi kesalahan saat menyimpan.");
       return;
     }
 
@@ -106,42 +97,26 @@ export default function IsimodulClient({ user }) {
     await loadData();
   };
 
-  // 🔹 Delete
+  // 🔹 Hapus isi modul
   const del = async (id) => {
-    if (!confirm("Hapus isi modul ini?")) return;
+    if (!confirm("Yakin ingin menghapus isi modul ini?")) return;
     const res = await fetch(`/api/admin/isimodul?id=${id}`, { method: "DELETE" });
     if (res.ok) await loadData();
   };
 
-  // 🔹 Open modal (Tambah/Edit)
-  const openModal = async (m = null) => {
+  // 🔹 Buka modal tambah/edit
+  const openModal = (m = null) => {
     if (m) {
       setEditId(m.id);
-      const res = await fetch(`/api/admin/isimodul?id=${m.id}`, { cache: "no-store" });
-      const data = await res.json();
-      const oldPert = String(data.pertemuan ?? "").trim();
-      const perts = await loadPertemuan(String(data.mata_kuliah ?? "").trim());
-
-      let selectedPert = "";
-      if (perts && perts.length) {
-        selectedPert =
-          perts.find((p) => p === oldPert) ||
-          perts.find((p) => p.toLowerCase() === oldPert.toLowerCase()) ||
-          perts.find((p) => p.includes(oldPert) || oldPert.includes(p)) ||
-          "";
-      }
-
       setForm({
-        mata_kuliah: String(data.mata_kuliah ?? "").trim(),
-        pertemuan: selectedPert || "",
-        deskripsi: data.deskripsi ?? "",
-        halaman: data.halaman ?? "",
-        gambar: data.gambar ?? null,
+        modul_id: m.modul_id || "",
+        halaman: m.halaman || "",
+        deskripsi: m.deskripsi || "",
+        gambar: null,
       });
-
-      if (data.gambar) {
-        setPreviewUrl(data.gambar);
-        setFileName(data.gambar.split("/").pop());
+      if (m.gambar) {
+        setPreviewUrl(m.gambar);
+        setFileName(m.gambar.split("/").pop());
       } else {
         setPreviewUrl(null);
         setFileName("");
@@ -149,57 +124,54 @@ export default function IsimodulClient({ user }) {
     } else {
       setEditId(null);
       setForm({
-        mata_kuliah: "",
-        pertemuan: "",
-        deskripsi: "",
+        modul_id: "",
         halaman: "",
+        deskripsi: "",
         gambar: null,
       });
-      setPertemuanList([]);
+      setPreviewUrl(null);
+      setFileName("");
     }
     setShowModal(true);
   };
 
-  // 🔹 Filter list
+  // 🔹 Filter data dinamis
   const filteredList = list.filter((item) => {
-    let match = true;
-    if (filterMataKuliah) match = match && item.mata_kuliah === filterMataKuliah;
-    if (filterPertemuan) match = match && item.pertemuan === filterPertemuan;
-    return match;
+    const matchMataKuliah = filterMataKuliah
+      ? item.mata_kuliah === filterMataKuliah
+      : true;
+    const matchPertemuan = filterPertemuan
+      ? item.pertemuan === filterPertemuan
+      : true;
+    const matchSearch = search
+      ? item.deskripsi?.toLowerCase().includes(search.toLowerCase())
+      : true;
+    return matchMataKuliah && matchPertemuan && matchSearch;
   });
+
+  // 🔹 Ambil daftar pertemuan dari modulList yang difilter
+  const pertemuanOptions = modulList
+    .filter((m) => (filterMataKuliah ? m.mata_kuliah === filterMataKuliah : true))
+    .map((m) => m.pertemuan);
 
   return (
     <div className="relative p-2">
-      {/* Filter */}
-      <div className="flex gap-4 mb-4">
+      {/* 🔍 Filter dan pencarian */}
+      <div className="flex flex-wrap gap-2 mb-4 items-center">
         <select
           value={filterMataKuliah}
-          onChange={async (e) => {
-            const mk = e.target.value;
-            setFilterMataKuliah(mk);
+          onChange={(e) => {
+            setFilterMataKuliah(e.target.value);
             setFilterPertemuan("");
-            if (mk) {
-              const res = await fetch("/api/admin/pertemuan", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ mata_kuliah: mk }),
-              });
-              const data = await res.json();
-              setPertemuanOptions(Array.isArray(data) ? data.map((d) => d.pertemuan ?? d) : []);
-            } else {
-              setPertemuanOptions([]);
-            }
           }}
           className="border px-3 py-2 rounded"
         >
           <option value="">-- Semua Mata Kuliah --</option>
-          {[...new Set(modulList.map((mk) => String(mk.mata_kuliah ?? "").trim()))].map(
-            (mk, i) => (
-              <option key={i} value={mk}>
-                {mk}
-              </option>
-            )
-          )}
+          {[...new Set(modulList.map((m) => m.mata_kuliah))].map((mk, i) => (
+            <option key={i} value={mk}>
+              {mk}
+            </option>
+          ))}
         </select>
 
         <select
@@ -215,9 +187,17 @@ export default function IsimodulClient({ user }) {
             </option>
           ))}
         </select>
+
+        <input
+          type="text"
+          placeholder="Cari deskripsi..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="border px-3 py-2 rounded flex-1 min-w-[200px]"
+        />
       </div>
 
-      {/* Tambah tombol */}
+      {/* Tombol Tambah */}
       {(user.role === "admin" || user.role === "laboran") && (
         <button
           onClick={() => openModal()}
@@ -227,77 +207,69 @@ export default function IsimodulClient({ user }) {
         </button>
       )}
 
-      {/* Table */}
-      <div className="overflow-x-auto relative z-0">
-        <table className="min-w-full border border-gray-300">
+      {/* Tabel Data */}
+      <div className="overflow-x-auto">
+        <table className="min-w-full border border-gray-300 text-sm">
           <thead className="bg-gray-100">
             <tr>
               <th className="border px-3 py-2">No</th>
               <th className="border px-3 py-2">Mata Kuliah</th>
               <th className="border px-3 py-2">Pertemuan</th>
-              <th className="border px-3 py-2">Gambar</th>
-              <th className="border px-3 py-2">Deskripsi</th>
               <th className="border px-3 py-2">Halaman</th>
+              <th className="border px-3 py-2">Deskripsi</th>
+              <th className="border px-3 py-2">Gambar</th>
               <th className="border px-3 py-2">Aksi</th>
             </tr>
           </thead>
           <tbody>
-            {filteredList
-              .slice()
-              .sort((a, b) => {
-                if (a.mata_kuliah < b.mata_kuliah) return -1;
-                if (a.mata_kuliah > b.mata_kuliah) return 1;
-
-                const pertA = parseInt(a.pertemuan, 10);
-                const pertB = parseInt(b.pertemuan, 10);
-                if (!isNaN(pertA) && !isNaN(pertB)) return pertA - pertB;
-
-                const halA = parseInt(a.halaman, 10);
-                const halB = parseInt(b.halaman, 10);
-                if (!isNaN(halA) && !isNaN(halB)) return halA - halB;
-                return String(a.halaman).localeCompare(String(b.halaman));
-              })
-              .map((m, i) => (
-                <tr key={m.id} className="hover:bg-gray-50">
-                  <td className="border px-3 py-1">{i + 1}</td>
-                  <td className="border px-3 py-1">{m.mata_kuliah}</td>
-                  <td className="border px-3 py-1">{m.pertemuan}</td>
-                  <td className="border px-3 py-1">
-                    {m.gambar && (
-                      <img
-                        src={m.gambar}
-                        alt=""
-                        className="w-16 h-16 object-cover rounded"
-                      />
-                    )}
-                  </td>
-                  <td className="border px-3 py-1">{m.deskripsi}</td>
-                  <td className="border px-3 py-1">{m.halaman}</td>
-                  <td className="border px-3 py-1 space-x-1">
-                    {(user.role === "admin" || user.role === "laboran") && (
-                      <>
-                        <button
-                          onClick={() => openModal(m)}
-                          className="px-2 py-1 bg-yellow-400 rounded hover:bg-yellow-500 text-white"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => del(m.id)}
-                          className="px-2 py-1 bg-red-500 rounded hover:bg-red-600 text-white"
-                        >
-                          Delete
-                        </button>
-                      </>
-                    )}
-                  </td>
-                </tr>
-              ))}
+            {filteredList.map((m, i) => (
+              <tr key={m.id} className="hover:bg-gray-50">
+                <td className="border px-3 py-1 text-center">{i + 1}</td>
+                <td className="border px-3 py-1">{m.mata_kuliah}</td>
+                <td className="border px-3 py-1">{m.pertemuan}</td>
+                <td className="border px-3 py-1 text-center">{m.halaman}</td>
+                <td className="border px-3 py-1">{m.deskripsi}</td>
+                <td className="border px-3 py-1 text-center">
+                  {m.gambar && (
+                    <img
+                      src={m.gambar}
+                      alt=""
+                      className="w-16 h-16 object-cover rounded"
+                    />
+                  )}
+                </td>
+                <td className="border px-3 py-1 text-center space-x-1">
+                  {(user.role === "admin" || user.role === "laboran") && (
+                    <>
+                      <button
+                        onClick={() => openModal(m)}
+                        className="px-2 py-1 bg-yellow-400 text-white rounded hover:bg-yellow-500"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => del(m.id)}
+                        className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+                      >
+                        Delete
+                      </button>
+                    </>
+                  )}
+                </td>
+              </tr>
+            ))}
+            {filteredList.length === 0 && (
+              <tr>
+                <td colSpan="7" className="text-center py-4 text-gray-500">
+                  Tidak ada data ditemukan.
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
 
-      {/* Modal */}
+      {/* Modal Tambah/Edit */}
       {showModal && (
         <div
           className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50"
@@ -311,51 +283,48 @@ export default function IsimodulClient({ user }) {
               {editId ? "Edit Isi Modul" : "Tambah Isi Modul"}
             </h3>
 
-            <div className="space-y-2">
-              {/* Mata Kuliah */}
+            <div className="space-y-3">
+              {/* Pilih Modul */}
               <select
-                value={form.mata_kuliah}
-                onChange={async (e) => {
-                  const newMk = e.target.value;
-                  setForm((prev) => ({ ...prev, mata_kuliah: newMk, pertemuan: "" }));
-                  await loadPertemuan(newMk);
-                }}
+                value={form.modul_id}
+                onChange={(e) =>
+                  setForm({ ...form, modul_id: e.target.value })
+                }
                 className="w-full border px-3 py-2 rounded"
                 required
               >
-                <option value="">-- Pilih Mata Kuliah --</option>
-                {[...new Set(modulList.map((mk) => String(mk.mata_kuliah ?? "").trim()))].map(
-                  (mk, i) => (
-                    <option key={i} value={mk}>
-                      {mk}
-                    </option>
-                  )
-                )}
-              </select>
-
-              {/* Pertemuan */}
-              <select
-                value={form.pertemuan}
-                onChange={(e) => setForm({ ...form, pertemuan: e.target.value })}
-                className="w-full border px-3 py-2 rounded"
-                required
-              >
-                <option value="">-- Pilih Pertemuan --</option>
-                {pertemuanList.map((p, i) => (
-                  <option key={i} value={p}>
-                    {p}
+                <option value="">-- Pilih Modul --</option>
+                {modulList.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.mata_kuliah} — {m.pertemuan}
                   </option>
                 ))}
               </select>
 
-              {/* Gambar */}
+              {/* Pilih Halaman */}
+              <select
+                value={form.halaman}
+                onChange={(e) =>
+                  setForm({ ...form, halaman: e.target.value })
+                }
+                className="w-full border px-3 py-2 rounded"
+                required
+              >
+                <option value="">-- Pilih Halaman --</option>
+                {halamanList.map((h) => (
+                  <option key={h} value={h}>
+                    Halaman {h}
+                  </option>
+                ))}
+              </select>
+
+              {/* Upload Gambar */}
               <input
                 type="file"
                 accept="image/*"
                 onChange={(e) => {
                   const file = e.target.files[0];
                   setForm({ ...form, gambar: file });
-
                   if (file) {
                     setPreviewUrl(URL.createObjectURL(file));
                     setFileName(file.name);
@@ -375,7 +344,11 @@ export default function IsimodulClient({ user }) {
                     alt="Preview"
                     className="w-32 h-32 object-cover rounded border"
                   />
-                  {fileName && <p className="text-xs text-gray-500 mt-1">File: {fileName}</p>}
+                  {fileName && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      File: {fileName}
+                    </p>
+                  )}
                 </div>
               )}
 
@@ -383,26 +356,13 @@ export default function IsimodulClient({ user }) {
               <textarea
                 placeholder="Deskripsi"
                 value={form.deskripsi}
-                onChange={(e) => setForm({ ...form, deskripsi: e.target.value })}
+                onChange={(e) =>
+                  setForm({ ...form, deskripsi: e.target.value })
+                }
                 className="w-full border px-3 py-2 rounded"
                 rows={4}
-              />
-
-              {/* Halaman */}
-              <label className="block mb-2">Halaman</label>
-              <select
-                value={form.halaman}
-                onChange={(e) => setForm({ ...form, halaman: e.target.value })}
-                className="w-full border px-3 py-2 rounded"
                 required
-              >
-                <option value="">-- Pilih Halaman --</option>
-                {halamanList.map((h, i) => (
-                  <option key={i} value={h}>
-                    {h}
-                  </option>
-                ))}
-              </select>
+              />
             </div>
 
             <div className="flex justify-end gap-2 mt-4">

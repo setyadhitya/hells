@@ -12,13 +12,11 @@ async function getConnection() {
   });
 }
 
-// 🔹 Helper konversi file ke buffer
 async function fileToBuffer(file) {
   const bytes = await file.arrayBuffer();
   return Buffer.from(bytes);
 }
 
-// 🔹 Middleware auth
 async function auth(req) {
   const token = req.cookies.get("token")?.value;
   if (!token) throw new Error("Unauthorized");
@@ -27,7 +25,9 @@ async function auth(req) {
   return user;
 }
 
-// 🔹 GET: list semua isi modul / detail by id
+// ===================================================
+// 🔹 GET semua isi modul / detail by ID
+// ===================================================
 export async function GET(req) {
   try {
     const { searchParams } = new URL(req.url);
@@ -36,23 +36,46 @@ export async function GET(req) {
     const conn = await getConnection();
 
     if (id) {
-      const [rows] = await conn.query("SELECT * FROM tb_isimodul WHERE id=?", [id]);
+      const [rows] = await conn.query(
+        `
+        SELECT 
+          i.id, 
+          i.modul_id,
+          i.halaman, 
+          i.gambar, 
+          i.deskripsi,
+          m.mata_kuliah,
+          m.pertemuan,
+          m.materi
+        FROM tb_isimodul i
+        LEFT JOIN tb_modul m ON i.modul_id = m.id
+        WHERE i.id = ?
+      `,
+        [id]
+      );
       await conn.end();
+
       if (rows.length === 0) {
-        return new Response(JSON.stringify({ error: "Data tidak ditemukan" }), {
-          status: 404,
-        });
+        return new Response(JSON.stringify({ error: "Data tidak ditemukan" }), { status: 404 });
       }
+
       return Response.json(rows[0]);
     }
 
+    // Ambil semua isi modul
     const [rows] = await conn.query(`
-      SELECT i.id, i.mata_kuliah, i.pertemuan, i.gambar, i.deskripsi, i.halaman,
-             m.pertemuan AS pertemuan_label
+      SELECT 
+        i.id, 
+        i.modul_id,
+        i.halaman, 
+        i.gambar, 
+        i.deskripsi,
+        m.mata_kuliah,
+        m.pertemuan,
+        m.materi
       FROM tb_isimodul i
-      LEFT JOIN tb_modul m 
-        ON i.mata_kuliah = m.mata_kuliah AND i.pertemuan = m.pertemuan
-      ORDER BY i.id DESC
+      LEFT JOIN tb_modul m ON i.modul_id = m.id
+      ORDER BY m.mata_kuliah ASC, CAST(SUBSTRING_INDEX(m.pertemuan, ' ', -1) AS UNSIGNED), i.halaman ASC
     `);
 
     await conn.end();
@@ -63,7 +86,9 @@ export async function GET(req) {
   }
 }
 
-// 🔹 POST: tambah isi modul baru
+// ===================================================
+// 🔹 POST tambah isi modul baru
+// ===================================================
 export async function POST(req) {
   try {
     const user = await auth(req);
@@ -72,41 +97,54 @@ export async function POST(req) {
     }
 
     const formData = await req.formData();
-    const mata_kuliah = formData.get("mata_kuliah");
-    const pertemuan = formData.get("pertemuan");
+    const modul_id = formData.get("modul_id");
+    const halaman = formData.get("halaman");
     const deskripsi = formData.get("deskripsi");
     const file = formData.get("gambar");
-    const halaman = formData.get("halaman");
 
+    const conn = await getConnection();
+
+    // ✅ Cegah duplikasi modul_id + halaman
+    const [exists] = await conn.query(
+      "SELECT COUNT(*) AS cnt FROM tb_isimodul WHERE modul_id = ? AND halaman = ?",
+      [modul_id, halaman]
+    );
+    if (exists[0].cnt > 0) {
+      await conn.end();
+      return new Response(
+        JSON.stringify({ error: `Halaman ${halaman} untuk modul ini sudah ada.` }),
+        { status: 400 }
+      );
+    }
+
+    // ✅ Upload gambar jika ada
     let filePath = null;
     if (file && file.name) {
       const buffer = await fileToBuffer(file);
       const uploadDir = path.join(process.cwd(), "public", "uploads", "modul");
       if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
-
       const fileName = `${Date.now()}-${file.name}`;
       const fullPath = path.join(uploadDir, fileName);
       fs.writeFileSync(fullPath, buffer);
-
       filePath = `/uploads/modul/${fileName}`;
     }
 
-    const conn = await getConnection();
-    const [result] = await conn.execute(
-      `INSERT INTO tb_isimodul (mata_kuliah, pertemuan, gambar, deskripsi, halaman) 
-       VALUES (?,?,?,?,?)`,
-      [mata_kuliah, pertemuan, filePath, deskripsi, halaman]
+    await conn.execute(
+      "INSERT INTO tb_isimodul (modul_id, halaman, gambar, deskripsi) VALUES (?, ?, ?, ?)",
+      [modul_id, halaman, filePath, deskripsi]
     );
-    await conn.end();
 
-    return Response.json({ message: "Isi modul ditambahkan", id: result.insertId });
+    await conn.end();
+    return Response.json({ message: "Isi modul ditambahkan" });
   } catch (err) {
     console.error("❌ POST Error:", err);
     return new Response(JSON.stringify({ error: err.message }), { status: 500 });
   }
 }
 
-// 🔹 PUT: update isi modul
+// ===================================================
+// 🔹 PUT update isi modul
+// ===================================================
 export async function PUT(req) {
   try {
     const user = await auth(req);
@@ -116,55 +154,64 @@ export async function PUT(req) {
 
     const formData = await req.formData();
     const id = formData.get("id");
-    const mata_kuliah = formData.get("mata_kuliah");
-    const pertemuan = formData.get("pertemuan");
+    const modul_id = formData.get("modul_id");
+    const halaman = formData.get("halaman");
     const deskripsi = formData.get("deskripsi");
     const file = formData.get("gambar");
-    const halaman = formData.get("halaman");
 
     const conn = await getConnection();
-    const [[oldData]] = await conn.query("SELECT * FROM tb_isimodul WHERE id=?", [id]);
-
-    if (!oldData) {
+    const [[old]] = await conn.query("SELECT * FROM tb_isimodul WHERE id=?", [id]);
+    if (!old) {
       await conn.end();
       return new Response(JSON.stringify({ error: "Data tidak ditemukan" }), { status: 404 });
     }
 
-    let filePath = oldData.gambar;
+    // ✅ Cegah duplikasi modul_id + halaman (selain ID sendiri)
+    const [dupe] = await conn.query(
+      "SELECT COUNT(*) AS cnt FROM tb_isimodul WHERE modul_id=? AND halaman=? AND id!=?",
+      [modul_id, halaman, id]
+    );
+    if (dupe[0].cnt > 0) {
+      await conn.end();
+      return new Response(
+        JSON.stringify({ error: `Halaman ${halaman} untuk modul ini sudah ada.` }),
+        { status: 400 }
+      );
+    }
 
+    let filePath = old.gambar;
+
+    // ✅ Upload file baru jika ada
     if (file && file.name) {
-      if (oldData.gambar) {
-        const oldPath = path.join(process.cwd(), "public", oldData.gambar);
+      if (old.gambar) {
+        const oldPath = path.join(process.cwd(), "public", old.gambar);
         if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
       }
-
       const buffer = await fileToBuffer(file);
       const uploadDir = path.join(process.cwd(), "public", "uploads", "modul");
       if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
-
       const fileName = `${Date.now()}-${file.name}`;
       const fullPath = path.join(uploadDir, fileName);
       fs.writeFileSync(fullPath, buffer);
-
       filePath = `/uploads/modul/${fileName}`;
     }
 
     await conn.execute(
-      `UPDATE tb_isimodul 
-       SET mata_kuliah=?, pertemuan=?, gambar=?, deskripsi=?, halaman=? 
-       WHERE id=?`,
-      [mata_kuliah, pertemuan, filePath, deskripsi, halaman, id]
+      "UPDATE tb_isimodul SET modul_id=?, halaman=?, gambar=?, deskripsi=? WHERE id=?",
+      [modul_id, halaman, filePath, deskripsi, id]
     );
     await conn.end();
 
-    return Response.json({ message: "Isi modul diupdate" });
+    return Response.json({ message: "Isi modul diperbarui" });
   } catch (err) {
     console.error("❌ PUT Error:", err);
     return new Response(JSON.stringify({ error: err.message }), { status: 500 });
   }
 }
 
-// 🔹 DELETE: hapus isi modul
+// ===================================================
+// 🔹 DELETE hapus isi modul
+// ===================================================
 export async function DELETE(req) {
   try {
     const user = await auth(req);
@@ -176,15 +223,14 @@ export async function DELETE(req) {
     const id = searchParams.get("id");
 
     const conn = await getConnection();
-    const [[oldData]] = await conn.query("SELECT * FROM tb_isimodul WHERE id=?", [id]);
-
-    if (!oldData) {
+    const [[old]] = await conn.query("SELECT * FROM tb_isimodul WHERE id=?", [id]);
+    if (!old) {
       await conn.end();
       return new Response(JSON.stringify({ error: "Data tidak ditemukan" }), { status: 404 });
     }
 
-    if (oldData.gambar) {
-      const oldPath = path.join(process.cwd(), "public", oldData.gambar);
+    if (old.gambar) {
+      const oldPath = path.join(process.cwd(), "public", old.gambar);
       if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
     }
 
