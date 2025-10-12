@@ -1,6 +1,6 @@
 // app/api/admin/praktikum/route.js
+import { secureHandler } from "../../../../lib/secureApi";
 import mysql from "mysql2/promise";
-import { verifyToken } from "../../../../lib/auth";
 
 // 🔹 Fungsi koneksi ke database
 async function getConnection() {
@@ -12,183 +12,213 @@ async function getConnection() {
   });
 }
 
-// 🔹 Middleware: validasi token dan user
-async function auth(req) {
-  const token = req.cookies.get("token")?.value;
-  if (!token) throw new Error("Unauthorized");
-  const user = await verifyToken(token);
-  if (!user) throw new Error("Unauthorized");
-  return user;
-}
-
-// ==================== 🔹 GET ====================
+// ==================== 🔹 GET — Ambil semua praktikum ====================
 export async function GET(req) {
-  try {
-    await auth(req);
-    const conn = await getConnection();
-    const [rows] = await conn.execute("SELECT * FROM tb_praktikum");
-    await conn.end();
-    return Response.json(rows);
-  } catch (err) {
-    console.error("GET Error:", err);
-    return new Response(
-      JSON.stringify({ error: err.message || "Unauthorized" }),
-      { status: 401 }
-    );
-  }
+  return secureHandler(req, {
+    requireAuth: true,
+    rateLimit: true,
+    handler: async ({ user, ip, logAudit }) => {
+      const conn = await getConnection();
+      const [rows] = await conn.execute("SELECT * FROM tb_praktikum");
+      await conn.end();
+
+      // Audit log (read saja bisa dicatat atau di-skip)
+      await logAudit({
+        userId: user.id,
+        username: user.username,
+        action: "read_praktikum",
+        ip,
+      });
+
+      return rows;
+    },
+  });
 }
 
-// ==================== 🔹 POST ====================
+// ==================== 🔹 POST — Tambah praktikum baru ====================
 export async function POST(req) {
-  try {
-    const user = await auth(req);
-    if (!["admin", "laboran"].includes(user.role)) {
-      return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403 });
-    }
+  return secureHandler(req, {
+    requireAuth: true,
+    requireCsrf: true,
+    rateLimit: true,
+    handler: async ({ user, ip, logAudit }) => {
+      if (!["admin", "laboran"].includes(user.role)) {
+        return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403 });
+      }
 
-    const body = await req.json();
-    const {
-      mata_kuliah, jurusan, kelas, semester,
-      hari, jam_mulai, jam_ahir, shift,
-      assisten, catatan
-    } = body;
+      const body = await req.json();
+      const {
+        mata_kuliah, jurusan, kelas, semester,
+        hari, jam_mulai, jam_ahir, shift,
+        assisten, catatan
+      } = body;
 
-    const conn = await getConnection();
+      const conn = await getConnection();
 
-    // Cek duplikasi praktikum
-    const [duplikasi] = await conn.execute(
-      "SELECT id FROM tb_praktikum WHERE mata_kuliah=? AND kelas=?",
-      [mata_kuliah, kelas]
-    );
-    if (duplikasi.length > 0) {
-      await conn.end();
-      return new Response(
-        JSON.stringify({ error: `praktikum ${mata_kuliah} untuk kelas ${kelas} sudah ada` }),
-        { status: 400 }
+      // Cek duplikasi praktikum
+      const [duplikasi] = await conn.execute(
+        "SELECT id FROM tb_praktikum WHERE mata_kuliah=? AND kelas=?",
+        [mata_kuliah, kelas]
       );
-    }
+      if (duplikasi.length > 0) {
+        await conn.end();
+        return new Response(
+          JSON.stringify({ error: `praktikum ${mata_kuliah} untuk kelas ${kelas} sudah ada` }),
+          { status: 400 }
+        );
+      }
 
-    // Cek bentrok shift
-    const [bentrok] = await conn.execute(
-      "SELECT id FROM tb_praktikum WHERE hari=? AND shift=?",
-      [hari, shift]
-    );
-    if (bentrok.length > 0) {
-      await conn.end();
-      return new Response(
-        JSON.stringify({ error: `Sudah ada praktikum di hari ${hari}, shift ${shift}` }),
-        { status: 400 }
+      // Cek bentrok shift
+      const [bentrok] = await conn.execute(
+        "SELECT id FROM tb_praktikum WHERE hari=? AND shift=?",
+        [hari, shift]
       );
-    }
+      if (bentrok.length > 0) {
+        await conn.end();
+        return new Response(
+          JSON.stringify({ error: `Sudah ada praktikum di hari ${hari}, shift ${shift}` }),
+          { status: 400 }
+        );
+      }
 
-    // Tambah praktikum baru
-    const [result] = await conn.execute(
-      `INSERT INTO tb_praktikum 
+      // Tambah praktikum baru
+      const [result] = await conn.execute(
+        `INSERT INTO tb_praktikum 
         (mata_kuliah, jurusan, kelas, semester, hari, jam_mulai, jam_ahir, shift, assisten, catatan)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [mata_kuliah, jurusan, kelas, semester, hari, jam_mulai, jam_ahir, shift, assisten, catatan]
-    );
-    const newId = result.insertId;
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [mata_kuliah, jurusan, kelas, semester, hari, jam_mulai, jam_ahir, shift, assisten, catatan]
+      );
 
+      await conn.end();
 
-    await conn.end();
-    return Response.json({ message: "praktikum & jadwal berhasil ditambahkan", id: newId });
-  } catch (err) {
-    console.error("POST Error:", err);
-    return new Response(
-      JSON.stringify({ error: err.message || "Unauthorized" }),
-      { status: 401 }
-    );
-  }
+      // Audit log
+      await logAudit({
+        userId: user.id,
+        username: user.username,
+        action: "create_praktikum",
+        ip,
+        meta: { id: result.insertId, mata_kuliah, kelas },
+      });
+
+      return { message: "praktikum & jadwal berhasil ditambahkan", id: result.insertId };
+    },
+  });
 }
 
-// ==================== 🔹 PUT ====================
+// ==================== 🔹 PUT — Update praktikum ====================
 export async function PUT(req) {
-  try {
-    const user = await auth(req);
-    if (!["admin", "laboran"].includes(user.role)) {
-      return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403 });
-    }
+  return secureHandler(req, {
+    requireAuth: true,
+    requireCsrf: true,
+    rateLimit: true,
+    handler: async ({ user, ip, logAudit }) => {
+      if (!["admin", "laboran"].includes(user.role)) {
+        return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403 });
+      }
 
-    const body = await req.json();
-    const {
-      id, mata_kuliah, jurusan, kelas, semester,
-      hari, jam_mulai, jam_ahir, shift, assisten, catatan
-    } = body;
+      const body = await req.json();
+      const {
+        id, mata_kuliah, jurusan, kelas, semester,
+        hari, jam_mulai, jam_ahir, shift, assisten, catatan
+      } = body;
 
-    const conn = await getConnection();
+      if (!id) {
+        return new Response(JSON.stringify({ error: "ID wajib dikirim" }), { status: 400 });
+      }
 
-    // Cek duplikasi
-    const [duplikasi] = await conn.execute(
-      "SELECT id FROM tb_praktikum WHERE mata_kuliah=? AND kelas=? AND id!=?",
-      [mata_kuliah, kelas, id]
-    );
-    if (duplikasi.length > 0) {
-      await conn.end();
-      return new Response(
-        JSON.stringify({ error: `praktikum ${mata_kuliah} untuk kelas ${kelas} sudah ada` }),
-        { status: 400 }
+      const conn = await getConnection();
+
+      // Cek duplikasi
+      const [duplikasi] = await conn.execute(
+        "SELECT id FROM tb_praktikum WHERE mata_kuliah=? AND kelas=? AND id!=?",
+        [mata_kuliah, kelas, id]
       );
-    }
+      if (duplikasi.length > 0) {
+        await conn.end();
+        return new Response(
+          JSON.stringify({ error: `praktikum ${mata_kuliah} untuk kelas ${kelas} sudah ada` }),
+          { status: 400 }
+        );
+      }
 
-    // Cek bentrok shift
-    const [bentrok] = await conn.execute(
-      "SELECT id FROM tb_praktikum WHERE hari=? AND shift=? AND id!=?",
-      [hari, shift, id]
-    );
-    if (bentrok.length > 0) {
-      await conn.end();
-      return new Response(
-        JSON.stringify({ error: `Sudah ada praktikum di hari ${hari}, shift ${shift}` }),
-        { status: 400 }
+      // Cek bentrok shift
+      const [bentrok] = await conn.execute(
+        "SELECT id FROM tb_praktikum WHERE hari=? AND shift=? AND id!=?",
+        [hari, shift, id]
       );
-    }
+      if (bentrok.length > 0) {
+        await conn.end();
+        return new Response(
+          JSON.stringify({ error: `Sudah ada praktikum di hari ${hari}, shift ${shift}` }),
+          { status: 400 }
+        );
+      }
 
-    // Update data
-    await conn.execute(
-      `UPDATE tb_praktikum
-       SET mata_kuliah=?, jurusan=?, kelas=?, semester=?, hari=?, 
-           jam_mulai=?, jam_ahir=?, shift=?, assisten=?, catatan=?
-       WHERE id=?`,
-      [mata_kuliah, jurusan, kelas, semester, hari, jam_mulai, jam_ahir, shift, assisten, catatan, id]
-    );
+      // Update data
+      await conn.execute(
+        `UPDATE tb_praktikum
+         SET mata_kuliah=?, jurusan=?, kelas=?, semester=?, hari=?, 
+         jam_mulai=?, jam_ahir=?, shift=?, assisten=?, catatan=?
+         WHERE id=?`,
+        [mata_kuliah, jurusan, kelas, semester, hari, jam_mulai, jam_ahir, shift, assisten, catatan, id]
+      );
 
-    await conn.end();
-    return Response.json({ message: "praktikum berhasil diperbarui" });
-  } catch (err) {
-    console.error("PUT Error:", err);
-    return new Response(
-      JSON.stringify({ error: err.message || "Unauthorized" }),
-      { status: 401 }
-    );
-  }
+      await conn.end();
+
+      // Audit log
+      await logAudit({
+        userId: user.id,
+        username: user.username,
+        action: "update_praktikum",
+        ip,
+        meta: { id, mata_kuliah, kelas },
+      });
+
+      return { message: "praktikum berhasil diperbarui" };
+    },
+  });
 }
 
-// ✅ DELETE PRAKTIKUM
+// ==================== 🔹 DELETE — Hapus praktikum ====================
 export async function DELETE(req) {
-  try {
-    const { searchParams } = new URL(req.url);
-    const id = searchParams.get("id");
+  return secureHandler(req, {
+    requireAuth: true,
+    requireCsrf: true,
+    rateLimit: true,
+    handler: async ({ user, ip, logAudit }) => {
+      if (!["admin", "laboran"].includes(user.role)) {
+        return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403 });
+      }
 
-    if (!id) return Response.json({ error: "Missing id" }, { status: 400 });
+      const { searchParams } = new URL(req.url);
+      const id = searchParams.get("id");
 
-    const db = await getConnection();
+      if (!id) return new Response(JSON.stringify({ error: "Missing id" }), { status: 400 });
 
-    // 🔹 Hapus dulu semua jadwal yang berelasi
-    await db.execute("DELETE FROM tb_jadwal WHERE id = ?", [id]);
+      const conn = await getConnection();
 
-    // 🔹 Baru hapus data praktikum
-    const [result] = await db.execute("DELETE FROM tb_praktikum WHERE id = ?", [id]);
+      // Hapus dulu semua jadwal yang berelasi
+      await conn.execute("DELETE FROM tb_jadwal WHERE praktikum_id = ?", [id]);
 
-    await db.end();
+      // Hapus data praktikum
+      const [result] = await conn.execute("DELETE FROM tb_praktikum WHERE id = ?", [id]);
 
-    if (result.affectedRows === 0)
-      return Response.json({ error: "Data not found" }, { status: 404 });
+      await conn.end();
 
-    return Response.json({ success: true, message: "Praktikum & jadwal terkait dihapus" });
-  } catch (err) {
-    console.error("🔥 ERROR DELETE PRAKTIKUM:", err);
-    return Response.json({ error: err.message }, { status: 500 });
-  }
+      if (result.affectedRows === 0) {
+        return new Response(JSON.stringify({ error: "Data not found" }), { status: 404 });
+      }
+
+      // Audit log
+      await logAudit({
+        userId: user.id,
+        username: user.username,
+        action: "delete_praktikum",
+        ip,
+        meta: { id },
+      });
+
+      return { success: true, message: "Praktikum & jadwal terkait dihapus" };
+    },
+  });
 }
-

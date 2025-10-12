@@ -25,7 +25,6 @@ export default function AdminLayout({ children }) {
         <h1 className="text-xl font-bold">Laboratorium 3 Jaringan Komputer</h1>
         <nav>
           <ul className="flex flex-wrap gap-4">
-            <li><Link href="/regler-admin-pengaturan/register" className="underline">Register</Link></li>
             <li><Link href="/regler-admin-pengaturan/akun" className="underline">Akun</Link></li>
             <li><Link href="/regler-admin-pengaturan/dashboard" className="underline">Dashboard</Link></li>
             <li><Link href="/regler-admin-pengaturan/praktikum" className="underline">Praktikum</Link></li>
