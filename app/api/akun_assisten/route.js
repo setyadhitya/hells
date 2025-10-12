@@ -96,6 +96,13 @@ export async function PUT(req) {
           );
         }
         const oldData = rows[0];
+        // Validasi nama & nomor HP di backend juga
+        if (nama && !/^[A-Za-z\s.'-]+$/.test(nama)) {
+          return new Response(JSON.stringify({ error: "Nama hanya boleh huruf dan spasi" }), { status: 400 });
+        }
+        if (nomorhp && !/^[0-9+]+$/.test(nomorhp)) {
+          return new Response(JSON.stringify({ error: "Nomor HP hanya boleh berisi angka" }), { status: 400 });
+        }
 
         // --- Validasi nilai yang tidak berubah ---
         if (username && username === oldData.username)

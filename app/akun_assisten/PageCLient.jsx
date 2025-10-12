@@ -142,7 +142,7 @@ export default function PageClient({ user }) {
         </div>
       ) : (
         <div className="text-center text-red-600 font-semibold">
-          Akun belum aktif. Silakan hubungi admin atau laboran.
+          Akun Assisten belum aktif. Silakan hubungi admin atau laboran.
         </div>
       )}
     </main>
