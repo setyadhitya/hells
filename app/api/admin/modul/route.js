@@ -47,13 +47,35 @@ export async function POST(req) {
     const { mata_kuliah, pertemuan, materi } = body;
 
     const conn = await getConnection();
+
+    // ✅ Cek duplikasi sebelum insert
+    const [check] = await conn.execute(
+      "SELECT COUNT(*) AS cnt FROM tb_modul WHERE mata_kuliah = ? AND pertemuan = ?",
+      [mata_kuliah, pertemuan]
+    );
+
+    if (check[0].cnt > 0) {
+      await conn.end();
+      return new Response(
+        JSON.stringify({
+          error: `Modul untuk ${mata_kuliah} - ${pertemuan} sudah ada.`,
+        }),
+        { status: 400 }
+      );
+    }
+
+    // Jika belum ada, tambahkan
     const [result] = await conn.execute(
       "INSERT INTO tb_modul (mata_kuliah, pertemuan, materi) VALUES (?, ?, ?)",
       [mata_kuliah, pertemuan, materi]
     );
+
     await conn.end();
 
-    return Response.json({ message: "Modul berhasil ditambahkan", id: result.insertId });
+    return Response.json({
+      message: "Modul berhasil ditambahkan",
+      id: result.insertId,
+    });
   } catch (err) {
     console.error("POST Error:", err);
     return new Response(JSON.stringify({ error: err.message || "Unauthorized" }), {
@@ -62,7 +84,7 @@ export async function POST(req) {
   }
 }
 
-// 🔹 PUT update modul
+
 // 🔹 PUT update modul
 export async function PUT(req) {
   try {
@@ -79,6 +101,23 @@ export async function PUT(req) {
     }
 
     const conn = await getConnection();
+
+    // ✅ Cek duplikasi (kecuali ID ini sendiri)
+    const [check] = await conn.execute(
+      "SELECT COUNT(*) AS cnt FROM tb_modul WHERE mata_kuliah = ? AND pertemuan = ? AND id != ?",
+      [mata_kuliah, pertemuan, id]
+    );
+
+    if (check[0].cnt > 0) {
+      await conn.end();
+      return new Response(
+        JSON.stringify({
+          error: `Modul untuk ${mata_kuliah} - ${pertemuan} sudah ada.`,
+        }),
+        { status: 400 }
+      );
+    }
+
     await conn.execute(
       "UPDATE tb_modul SET mata_kuliah=?, pertemuan=?, materi=? WHERE id=?",
       [mata_kuliah || null, pertemuan || null, materi || null, id]
@@ -93,6 +132,7 @@ export async function PUT(req) {
     });
   }
 }
+
 
 
 // 🔹 DELETE hapus modul
