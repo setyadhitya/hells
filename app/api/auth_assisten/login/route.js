@@ -1,109 +1,71 @@
 // app/api/auth_assisten/login/route.js
 import { NextResponse } from "next/server";
-import mysql from "mysql2/promise";
+import { db } from "../../../../lib/db";
 import bcrypt from "bcryptjs";
 import { signToken } from "../../../../lib/auth";
-import { secureHandler } from "../../../../lib/secureApi"; // middleware keamanan global
 
-// 🔹 Fungsi koneksi database
-async function getConnection() {
-  return await mysql.createConnection({
-    host: "localhost",
-    user: "root",
-    password: "",
-    database: "stern",
-  });
-}
-
-// ==================== 🔹 POST — Login untuk Asisten ====================
 export async function POST(req) {
-  return secureHandler(req, {
-    requireAuth: false, // login tidak butuh token
-    rateLimit: true,    // batasi percobaan login
-    handler: async ({ req, ip, logAudit }) => {
-      const { username, password } = await req.json();
+  try {
+    const { username, password } = await req.json();
 
-      // Validasi input awal
-      if (!username || !password) {
-        return new Response(
-          JSON.stringify({ error: "Username dan password wajib diisi" }),
-          { status: 400 }
-        );
-      }
+    // 🔍 Cari user asisten
+    const [rows] = await db.query(
+      "SELECT * FROM tb_assisten WHERE username=? AND role='assisten'",
+      [username]
+    );
 
-      const db = await getConnection();
-      const [rows] = await db.execute(
-        "SELECT * FROM tb_assisten WHERE username=? AND role='assisten' LIMIT 1",
-        [username]
+    if (rows.length === 0) {
+      return NextResponse.json(
+        { error: "Akun asisten tidak ditemukan atau belum diaktifkan" },
+        { status: 401 }
       );
-      await db.end();
+    }
 
-      if (rows.length === 0) {
-        return new Response(
-          JSON.stringify({ error: "Akun asisten tidak ditemukan atau belum aktif" }),
-          { status: 401 }
-        );
-      }
+    const user = rows[0];
 
-      const user = rows[0];
+    if (!user.password) {
+      return NextResponse.json(
+        { error: "Data asisten tidak valid (password kosong)" },
+        { status: 400 }
+      );
+    }
 
-      // 🔐 Pastikan password valid
-      if (!user.password) {
-        return new Response(
-          JSON.stringify({ error: "Password kosong di database" }),
-          { status: 400 }
-        );
-      }
+    const match = await bcrypt.compare(password, user.password);
+    if (!match) {
+      return NextResponse.json({ error: "Password salah" }, { status: 401 });
+    }
 
-      // 🔐 Cocokkan password hash
-      const match = await bcrypt.compare(password, user.password);
-      if (!match) {
-        // Catat percobaan login gagal
-        await logAudit({
-          userId: user.id,
-          username: user.username,
-          action: "login_failed_assisten",
-          ip,
-        });
-        return new Response(JSON.stringify({ error: "Password salah" }), { status: 401 });
-      }
+    // 🔹 Buat token JWT (huruf kecil agar konsisten)
+    const token = await signToken({
+      id: user.id,
+      username: user.username,
+      role: (user.role || "assisten").toLowerCase(),
+    });
 
-      // 🪪 Buat token JWT
-      const token = await signToken({
+    const res = NextResponse.json({
+      message: "Login berhasil",
+      user: {
         id: user.id,
         username: user.username,
-        nim: user.nim,
-        role: user.role || "assisten",
-      });
+        role: (user.role || "assisten").toLowerCase(),
+      },
+    });
 
-      // 🔹 Simpan token ke cookie (httpOnly agar tidak bisa diakses JS)
-      const res = NextResponse.json({
-        message: "Login berhasil",
-        user: {
-          id: user.id,
-          username: user.username,
-          nim: user.nim,
-          role: user.role,
-        },
-      });
+    // 🔹 Auto-detect environment
+    const isProd = process.env.NODE_ENV === "production";
 
-      res.cookies.set("token", token, {
-        httpOnly: true,
-        secure: true,
-        sameSite: "none",
-        path: "/",
-        maxAge: 60 * 60, // 1 jam
-      });
+    // 🔹 Simpan cookie dengan pengaturan dinamis
+    res.cookies.set("token", token, {
+      httpOnly: true,
+      secure: isProd, // ✅ true di server HTTPS, false di localhost
+      sameSite: isProd ? "none" : "lax",
+      path: "/",
+      maxAge: 60 * 60, // 1 jam
+    });
 
-      // Catat login sukses di audit log
-      await logAudit({
-        userId: user.id,
-        username: user.username,
-        action: "login_success_assisten",
-        ip,
-      });
-
-      return res;
-    },
-  });
+    return res;
+  } catch (err) {
+    console.error("Login Error:", err);
+    return NextResponse.json({ error: "Server error" }, { status: 500 });
+  }
 }

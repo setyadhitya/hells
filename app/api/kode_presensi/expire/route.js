@@ -1,5 +1,6 @@
+// app/api/kode_presensi/expire/route.js
 import mysql from "mysql2/promise";
-import { verifyToken } from "../../../../lib/auth";
+import { secureHandler } from "../../../../lib/secureApi";
 
 async function getConnection() {
   return await mysql.createConnection({
@@ -10,26 +11,33 @@ async function getConnection() {
   });
 }
 
+// ==================== 🔹 POST — Expire kode presensi aktif ====================
 export async function POST(req) {
-  const conn = await getConnection();
-  try {
-    const token = req.cookies.get("token")?.value;
-    if (!token) throw new Error("Unauthorized");
-    const user = await verifyToken(token);
+  return secureHandler(req, {
+    requireAuth: true,
+    rateLimit: true,
+    handler: async ({ user, logAudit, ip }) => {
+      if (user.role !== "assisten") {
+        return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403 });
+      }
 
-    // Update status presensi aktif milik user ini jadi expired
-    await conn.execute(
-      `UPDATE tb_kode_presensi 
-       SET status='expired' 
-       WHERE generated_by_assisten_id=? AND status='aktif'`,
-      [user.id]
-    );
+      const conn = await getConnection();
+      await conn.execute(
+        `UPDATE tb_kode_presensi 
+         SET status='expired' 
+         WHERE generated_by_assisten_id=? AND status='aktif'`,
+        [user.id]
+      );
+      await conn.end();
 
-    return new Response(JSON.stringify({ message: "Presensi expired" }), { status: 200 });
-  } catch (err) {
-    console.error("POST /expire error:", err);
-    return new Response(JSON.stringify({ message: err.message }), { status: 500 });
-  } finally {
-    await conn.end();
-  }
+      await logAudit({
+        userId: user.id,
+        username: user.username,
+        action: "expire_kode_presensi",
+        ip,
+      });
+
+      return new Response(JSON.stringify({ message: "Kode presensi telah di-expire" }), { status: 200 });
+    },
+  });
 }
