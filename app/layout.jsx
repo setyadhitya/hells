@@ -2,7 +2,7 @@ import './globals.css'
 import DarkModeToggle from './DarkModeToggle'
 
 export const metadata = {
-  title: 'Lab. 3 Jaringan Komputer',
+  title: 'Sys-ASLPDC-T2B2',
   description: 'Aplikasi layanan praktikum terintegrasi',
   other: {
     "permissions-policy":
