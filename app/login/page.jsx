@@ -1,22 +1,21 @@
 // app/login/page.jsx
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { verifyToken } from "../../lib/auth"; // fungsi verifikasi JWT/token
+import { verifyToken } from "../../lib/auth";
 import LoginForm from "./LoginForm";
 
+/**
+ * 🔐 Halaman Login Praktikan
+ * - Jika sudah login → redirect ke /profil
+ * - Jika belum → tampilkan form login
+ */
 export default async function LoginPage() {
-  // 🔹 Ambil cookie token dari request
   const cookieStore = await cookies();
   const token = cookieStore.get("token")?.value || null;
 
-  // 🔹 Verifikasi token (jika ada)
   const user = token ? await verifyToken(token) : null;
 
-  // 🔹 Kalau sudah login → redirect ke profil
-  if (user) {
-    redirect("/profil");
-  }
+  if (user) redirect("/profil");
 
-  // 🔹 Kalau belum login → render form login
   return <LoginForm />;
 }

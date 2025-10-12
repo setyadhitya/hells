@@ -1,30 +1,33 @@
-"use client"; 
+"use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
+/**
+ * 🧾 Form Login Praktikan
+ * - Mengirim username & password ke API
+ * - Redirect ke /profil jika berhasil
+ */
 export default function LoginForm() {
-  const [username, setUsername] = useState("");   // input username
-  const [password, setPassword] = useState("");   // input password
-  const [error, setError] = useState("");         // pesan error jika login gagal
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
   const router = useRouter();
 
-  // 🔹 Fungsi untuk submit login
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
 
     try {
-      // Kirim data ke API login
       const res = await fetch("/api/auth_praktikan/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include", // kirim cookie
         body: JSON.stringify({ username, password }),
       });
 
       const data = await res.json();
 
       if (res.ok) {
-        // Jika sukses, redirect ke /profil
         router.push("/profil");
       } else {
         setError(data.error || "Login gagal");
@@ -76,10 +79,7 @@ export default function LoginForm() {
         {/* Link ke halaman registrasi */}
         <p className="text-sm text-gray-500 mt-2">
           Belum punya akun?{" "}
-          <a
-            href="/pendaftaran"
-            className="text-blue-600 hover:underline"
-          >
+          <a href="/pendaftaran" className="text-blue-600 hover:underline">
             Daftar sekarang
           </a>
         </p>
