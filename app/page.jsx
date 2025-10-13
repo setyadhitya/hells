@@ -1,19 +1,30 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect } from "react";
+import { useSearchParams } from "next/navigation"; // ✅ Tambahkan ini
 import { motion } from "framer-motion";
-import {
-  AirVent,
-  BookOpen,
-  LayoutDashboard,
-  FileText,
-} from "lucide-react";
+import { AirVent, BookOpen, LayoutDashboard, FileText } from "lucide-react";
 
 export default function Home() {
+  const searchParams = useSearchParams(); // ✅ deteksi perubahan query string
+
+  useEffect(() => {
+    const message = searchParams.get("alert");
+    if (message) {
+      alert(message);
+
+      // Hapus parameter alert dari URL setelah ditampilkan
+      const url = new URL(window.location);
+      url.searchParams.delete("alert");
+      window.history.replaceState({}, "", url);
+    }
+  }, [searchParams]); // ✅ jalankan ulang setiap query string berubah
+
   const navItems = [
     { name: "Jadwal Praktikum", href: "/jadwal", icon: LayoutDashboard },
     { name: "Modul Praktikum", href: "/modul", icon: BookOpen },
-    { name: "Akun Asisten", href: "/akun_assisten", icon: AirVent },
+    { name: "Akun Assisten", href: "/akun_assisten", icon: AirVent },
     { name: "Akun Mahasiswa", href: "/login_praktikan", icon: FileText },
   ];
 
@@ -36,10 +47,6 @@ export default function Home() {
             Sistem Akses Seluruh Layanan Praktikum Dengan Cepat, Terintegrasi, Dan Tanpa Basa-Basi.
           </p>
         </motion.div>
-
-        {/* Background Decorative Elements */}
-        <div className="absolute -top-20 -right-32 w-96 h-96 bg-blue-200/40 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-0 -left-32 w-96 h-96 bg-indigo-200/30 rounded-full blur-3xl"></div>
       </section>
 
       {/* Menu Cards */}
@@ -60,7 +67,6 @@ export default function Home() {
                 shadow-md hover:shadow-2xl hover:-translate-y-1 transition-all p-8 
                 hover:bg-gradient-to-br hover:from-blue-50 hover:to-indigo-50"
               >
-                {/* Icon */}
                 <div
                   className="w-14 h-14 flex items-center justify-center rounded-xl bg-blue-100 text-blue-600 
                   mb-5 group-hover:bg-blue-600 group-hover:text-white transition-all duration-300 shadow-inner"

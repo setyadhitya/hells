@@ -1,7 +1,7 @@
 // app/presensi/page.jsx
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { verifyToken } from "../../lib/auth";
+import { verifyToken } from "../../../lib/auth";
 import PageClient from "./PageClient";
 
 /**

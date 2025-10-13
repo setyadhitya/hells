@@ -43,7 +43,7 @@ export default function PageClient({ user }) {
         method: "POST",
         credentials: "include",
       });
-      router.push("/login_assisten"); // arahkan ke login
+      router.push("/"); // arahkan ke login
     } catch (err) {
       console.error("Logout error:", err);
       alert("Gagal logout. Coba lagi.");

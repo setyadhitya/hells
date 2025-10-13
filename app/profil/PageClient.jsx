@@ -71,7 +71,7 @@ export default function PageClient({ user }) {
       {praktikan.status === "aktif" ? (
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           <Link
-            href="/presensi"
+            href="/profil/presensi"
             className="p-4 bg-blue-100 rounded-xl shadow hover:bg-blue-200 transition block text-center"
           >
             Presensi
