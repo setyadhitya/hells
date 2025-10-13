@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Eye, EyeOff } from "lucide-react";
 
-export default function PageClient({ user }) {
+export default function PageClient() {
   const [profil, setProfil] = useState(null);
   const [editMode, setEditMode] = useState(null);
   const [newValue, setNewValue] = useState("");
@@ -16,11 +16,11 @@ export default function PageClient({ user }) {
 
   // 🔹 Ambil data profil saat halaman dibuka
   useEffect(() => {
-    fetch(`/api/akun_assisten?id=${user.id}`, { credentials: "include" })
+    fetch(`/api/assisten`, { credentials: "include" })
       .then((res) => res.json())
       .then((data) => setProfil(data))
       .catch((err) => console.error("Gagal ambil profil:", err));
-  }, [user.id]);
+  }, []); // ✅ hanya dijalankan sekali saat komponen pertama kali dimuat
 
   // 🔹 Ganti field tertentu
   const handleEdit = (field) => {
@@ -77,10 +77,11 @@ export default function PageClient({ user }) {
       return;
     }
 
-    const payload = { id: user.id, [editMode]: newValue };
+    // 🔹 Payload untuk update profil
+    const payload = { id: profil.id, [editMode]: newValue };
     if (editMode === "password") payload.oldPassword = oldPassword;
 
-    // 🔐 Ambil CSRF token dari meta (otomatis dibuat CsrfProvider)
+    // 🔐 Ambil CSRF token dari meta (jika ada)
     const csrfToken =
       document.querySelector("meta[name='csrf-token']")?.content || "";
 
@@ -90,7 +91,7 @@ export default function PageClient({ user }) {
         credentials: "include", // kirim cookie login
         headers: {
           "Content-Type": "application/json",
-          "x-csrf-token": csrfToken, // kirim token CSRF
+          "x-csrf-token": csrfToken,
         },
         body: JSON.stringify(payload),
       });
@@ -98,17 +99,19 @@ export default function PageClient({ user }) {
       const result = await res.json();
 
       if (res.ok) {
-        // Jika username berubah → logout paksa agar token diganti
         if (editMode === "username") {
           setStatus("success");
           setTimeout(async () => {
-            await fetch("/api/auth_assisten/logout", { method: "POST", credentials: "include" });
+            await fetch("/api/auth_assisten/logout", {
+              method: "POST",
+              credentials: "include",
+            });
             window.location.href = "/login_assisten";
           }, 1000);
           return;
         }
 
-        // Jika bukan ubah username → tetap di halaman
+        // 🔹 Update profil di UI
         setProfil((prev) => ({ ...prev, [editMode]: newValue }));
         setStatus("success");
         setTimeout(() => {

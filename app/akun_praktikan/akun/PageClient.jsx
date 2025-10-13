@@ -1,26 +1,28 @@
-'use client';
+"use client";
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Eye, EyeOff } from "lucide-react"; // import ikon mata
+import { Eye, EyeOff } from "lucide-react"; // ikon mata untuk show/hide password
 
-export default function PageClient({ user }) {
+export default function PageClient() {
   const [profil, setProfil] = useState(null);
-  const [editMode, setEditMode] = useState(null); 
+  const [editMode, setEditMode] = useState(null);
   const [newValue, setNewValue] = useState("");
-  const [oldPassword, setOldPassword] = useState(""); 
+  const [oldPassword, setOldPassword] = useState("");
   const [status, setStatus] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showOldPassword, setShowOldPassword] = useState(false);
 
+  // 🔹 Ambil data profil dari API saat halaman pertama kali dimuat
   useEffect(() => {
-    fetch(`/api/akun?id=${user.id}`)
-      .then(res => res.json())
-      .then(data => setProfil(data))
-      .catch(err => console.error("Gagal ambil profil:", err));
-  }, [user.id]);
+    fetch(`/api/praktikan`, { credentials: "include" })
+      .then((res) => res.json())
+      .then((data) => setProfil(data))
+      .catch((err) => console.error("Gagal ambil profil:", err));
+  }, []); // ✅ dijalankan sekali saja
 
+  // 🔹 Mode edit field tertentu
   const handleEdit = (field) => {
     setEditMode(field);
     setNewValue("");
@@ -40,48 +42,64 @@ export default function PageClient({ user }) {
     setShowOldPassword(false);
   };
 
+  // 🔹 Validasi & kirim perubahan ke API
   const handleSave = async () => {
     setStatus("loading");
     setErrorMsg("");
 
+    // --- Validasi: tidak boleh sama dengan lama
     if (editMode !== "password" && newValue === profil[editMode]) {
       setStatus("error");
-      setErrorMsg(`${editMode === "nomorhp" ? "Nomor HP" : editMode.charAt(0).toUpperCase() + editMode.slice(1)} baru sama dengan lama`);
+      setErrorMsg(
+        `${
+          editMode === "nomorhp"
+            ? "Nomor HP"
+            : editMode.charAt(0).toUpperCase() + editMode.slice(1)
+        } baru sama dengan lama`
+      );
       return;
     }
 
+    // --- Validasi password lama wajib diisi
     if (editMode === "password" && !oldPassword) {
       setStatus("error");
       setErrorMsg("Masukkan password lama untuk mengganti password");
       return;
     }
 
-    const payload = { id: user.id, [editMode]: newValue };
+    const payload = { id: profil.id, [editMode]: newValue };
     if (editMode === "password") payload.oldPassword = oldPassword;
 
-    const res = await fetch("/api/akun", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
+    try {
+      const res = await fetch("/api/akun", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
 
-    const result = await res.json();
+      const result = await res.json();
 
-    if (res.ok) {
-      setProfil(prev => ({ ...prev, [editMode]: newValue }));
-      setStatus("success");
-      setTimeout(() => {
-        setEditMode(null);
-        setNewValue("");
-        setOldPassword("");
-        setStatus("");
-      }, 1000);
-    } else {
+      if (res.ok) {
+        setProfil((prev) => ({ ...prev, [editMode]: newValue }));
+        setStatus("success");
+        setTimeout(() => {
+          setEditMode(null);
+          setNewValue("");
+          setOldPassword("");
+          setStatus("");
+        }, 1000);
+      } else {
+        setStatus("error");
+        setErrorMsg(result.error || "Gagal menyimpan");
+      }
+    } catch (err) {
+      console.error("Fetch error:", err);
       setStatus("error");
-      setErrorMsg(result.error || "Gagal menyimpan");
+      setErrorMsg("Terjadi kesalahan koneksi ke server");
     }
   };
 
+  // 🔹 Loading awal
   if (!profil) {
     return (
       <main className="min-h-screen flex justify-center items-center text-gray-600">
@@ -90,6 +108,7 @@ export default function PageClient({ user }) {
     );
   }
 
+  // 🔹 Field yang bisa diedit
   const fields = [
     { key: "username", label: "Username", value: profil.username },
     { key: "nama", label: "Nama", value: profil.nama },
@@ -127,6 +146,7 @@ export default function PageClient({ user }) {
                 </button>
               </div>
 
+              {/* 🔹 Form edit muncul dinamis */}
               <AnimatePresence>
                 {editMode === f.key && (
                   <motion.div
@@ -142,23 +162,35 @@ export default function PageClient({ user }) {
                           type={showOldPassword ? "text" : "password"}
                           placeholder="Masukkan password lama"
                           value={oldPassword}
-                          onChange={e => setOldPassword(e.target.value)}
+                          onChange={(e) => setOldPassword(e.target.value)}
                           className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none pr-10"
                         />
                         <button
                           type="button"
-                          onClick={() => setShowOldPassword(prev => !prev)}
+                          onClick={() =>
+                            setShowOldPassword((prev) => !prev)
+                          }
                           className="absolute right-2 top-2 text-gray-500"
                         >
-                          {showOldPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                          {showOldPassword ? (
+                            <EyeOff size={18} />
+                          ) : (
+                            <Eye size={18} />
+                          )}
                         </button>
                       </div>
                     )}
 
-                    {/* Input password baru / field lain */}
+                    {/* Input field baru */}
                     <div className="relative">
                       <input
-                        type={f.key === "password" ? (showNewPassword ? "text" : "password") : "text"}
+                        type={
+                          f.key === "password"
+                            ? showNewPassword
+                              ? "text"
+                              : "password"
+                            : "text"
+                        }
                         placeholder={`Masukkan ${f.label} baru`}
                         value={newValue}
                         onChange={(e) => setNewValue(e.target.value)}
@@ -167,14 +199,21 @@ export default function PageClient({ user }) {
                       {f.key === "password" && (
                         <button
                           type="button"
-                          onClick={() => setShowNewPassword(prev => !prev)}
+                          onClick={() =>
+                            setShowNewPassword((prev) => !prev)
+                          }
                           className="absolute right-2 top-2 text-gray-500"
                         >
-                          {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                          {showNewPassword ? (
+                            <EyeOff size={18} />
+                          ) : (
+                            <Eye size={18} />
+                          )}
                         </button>
                       )}
                     </div>
 
+                    {/* Tombol aksi */}
                     <div className="flex justify-end gap-2">
                       <button
                         onClick={handleCancel}
@@ -191,11 +230,16 @@ export default function PageClient({ user }) {
                       </button>
                     </div>
 
+                    {/* Pesan status */}
                     {status === "success" && (
-                      <p className="text-green-600 text-sm text-right">✔️ Berhasil disimpan</p>
+                      <p className="text-green-600 text-sm text-right">
+                        ✔️ Berhasil disimpan
+                      </p>
                     )}
                     {status === "error" && (
-                      <p className="text-red-600 text-sm text-right">{errorMsg}</p>
+                      <p className="text-red-600 text-sm text-right">
+                        {errorMsg}
+                      </p>
                     )}
                   </motion.div>
                 )}
