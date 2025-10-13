@@ -25,7 +25,7 @@ export async function GET(req) {
       const [rows] = await conn.execute(
         `SELECT kp.*, mk.mata_kuliah
          FROM tb_kode_presensi kp
-         JOIN tb_praktikum mk ON kp.mata_kuliah_id = mk.id
+         JOIN tb_praktikum mk ON kp.praktikum_id = mk.id
          WHERE kp.generated_by_assisten_id = ?
          ORDER BY kp.id DESC LIMIT 1`,
         [user.id]

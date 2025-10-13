@@ -69,15 +69,37 @@ export default function PresensiStatusPage() {
             <p className="text-lg font-bold text-blue-700">
               Kode Presensi: <span className="text-2xl">{statusData.kode}</span>
             </p>
-            <p className={`font-semibold ${statusData.status === "aktif" ? "text-green-600" : "text-gray-500"}`}>
+            <p
+              className={`font-semibold ${
+                statusData.status === "aktif" ? "text-green-600" : "text-gray-500"
+              }`}
+            >
               Status: {statusData.status.toUpperCase()}
             </p>
+
+            {/* ✅ Tambahan baru: tampilkan lokasi dan bisa diklik buka Google Maps */}
+            {statusData.lokasi && (
+              <p className="text-green-600 font-medium mt-1">
+                Lokasi kode dibuat:{" "}
+                <a
+                  href={`https://www.google.com/maps?q=${statusData.lokasi}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline hover:text-green-800 transition"
+                  title="Klik untuk membuka di Google Maps"
+                >
+                  {statusData.lokasi}
+                </a>
+              </p>
+            )}
           </div>
 
           {statusData.status === "aktif" && countdown > 0 && (
             <div className="text-center mb-4">
               <p className="text-sm text-gray-600">Waktu tersisa</p>
-              <p className="text-3xl font-mono font-bold text-red-600">{formatCountdown(countdown)}</p>
+              <p className="text-3xl font-mono font-bold text-red-600">
+                {formatCountdown(countdown)}
+              </p>
               <div className="w-full bg-gray-200 h-3 rounded-full mt-2">
                 <div
                   className="h-3 bg-gradient-to-r from-green-400 via-yellow-400 to-red-500 rounded-full transition-all duration-1000"

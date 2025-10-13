@@ -19,56 +19,99 @@ export async function POST(req) {
     requireCsrf: true,
     rateLimit: true,
     handler: async ({ req, user, ip, logAudit }) => {
-      // ✅ Periksa role (case-insensitive)
+      // ✅ Hanya role assisten yang boleh buat kode
       if (user.role?.toLowerCase() !== "assisten") {
         return new Response(
-          JSON.stringify({ error: "Akses ditolak, hanya asisten yang boleh membuat kode" }),
+          JSON.stringify({
+            error: "Akses ditolak, hanya asisten yang boleh membuat kode",
+          }),
           { status: 403 }
         );
       }
 
-      const { mata_kuliah_id, pertemuan_ke, materi, kode } = await req.json();
-      if (!mata_kuliah_id || !pertemuan_ke || !materi || !kode) {
+      const { praktikum_id, pertemuan_ke, materi, kode, lokasi } = await req.json();
+
+      // Validasi wajib
+      if (!praktikum_id || !pertemuan_ke || !materi || !kode || !lokasi) {
         return new Response(JSON.stringify({ error: "Semua field wajib diisi" }), { status: 400 });
       }
 
       const conn = await getConnection();
 
-      // 🔎 Cek duplikasi
+      // 🔍 1️⃣ Cek apakah ada kode aktif milik asisten ini
+      const [aktif] = await conn.execute(
+        "SELECT id FROM tb_kode_presensi WHERE generated_by_assisten_id=? AND status='aktif' LIMIT 1",
+        [user.id]
+      );
+      if (aktif.length > 0) {
+        await conn.end();
+        return new Response(
+          JSON.stringify({
+            error: "Masih ada kode presensi aktif. Selesaikan dulu sebelum membuat baru.",
+          }),
+          { status: 409 }
+        );
+      }
+
+      // 🧩 2️⃣ Cek apakah pertemuan sebelumnya sudah ada
+      if (parseInt(pertemuan_ke) > 1) {
+        const [cekSebelumnya] = await conn.execute(
+          `SELECT id FROM tb_kode_presensi
+           WHERE praktikum_id=? AND pertemuan_ke=?`,
+          [praktikum_id, parseInt(pertemuan_ke) - 1]
+        );
+
+        if (cekSebelumnya.length === 0) {
+          await conn.end();
+          return new Response(
+            JSON.stringify({
+              error: `Tidak dapat membuat kode presensi untuk pertemuan ${pertemuan_ke}. Pertemuan ke ${pertemuan_ke - 1} belum ada presensi.`,
+            }),
+            { status: 409 }
+          );
+        }
+      }
+
+      // 🧩 3️⃣ Cek duplikasi pertemuan ke-n
       const [cek] = await conn.execute(
-        "SELECT id FROM tb_kode_presensi WHERE mata_kuliah_id=? AND pertemuan_ke=?",
-        [mata_kuliah_id, pertemuan_ke]
+        "SELECT id FROM tb_kode_presensi WHERE praktikum_id=? AND pertemuan_ke=?",
+        [praktikum_id, pertemuan_ke]
       );
 
       if (cek.length > 0) {
         await conn.end();
         return new Response(
-          JSON.stringify({ error: "Kode presensi untuk pertemuan ini sudah ada" }),
+          JSON.stringify({
+            error: "Kode presensi untuk pertemuan ini sudah ada",
+          }),
           { status: 409 }
         );
       }
 
-      // 💾 Simpan data
+      // 💾 4️⃣ Simpan data ke database
       const [result] = await conn.execute(
         `INSERT INTO tb_kode_presensi 
-         (mata_kuliah_id, pertemuan_ke, materi, kode, generated_by_assisten_id, status, created_at)
-         VALUES (?, ?, ?, ?, ?, 'aktif', NOW())`,
-        [mata_kuliah_id, pertemuan_ke, materi, kode, user.id]
+         (praktikum_id, pertemuan_ke, materi, lokasi, kode, generated_by_assisten_id, status, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, 'aktif', NOW())`,
+        [praktikum_id, pertemuan_ke, materi, lokasi, kode, user.id]
       );
 
       await conn.end();
 
-      // 🪵 Audit log
+      // 🪵 5️⃣ Catat log audit
       await logAudit({
         userId: user.id,
         username: user.username,
         action: "create_kode_presensi",
         ip,
-        meta: { mata_kuliah_id, pertemuan_ke, kode },
+        meta: { praktikum_id, pertemuan_ke, kode },
       });
 
       return new Response(
-        JSON.stringify({ message: "Kode presensi berhasil dibuat", id: result.insertId }),
+        JSON.stringify({
+          message: "Kode presensi berhasil dibuat",
+          id: result.insertId,
+        }),
         { status: 200 }
       );
     },

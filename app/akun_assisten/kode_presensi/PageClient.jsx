@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 
 export default function PageClient({ user }) {
   // 🧩 STATE UNTUK FORM DAN STATUS
-  const [dropdownData, setDropdownData] = useState([]);   // daftar mata kuliah
+  const [dropdownData, setDropdownData] = useState([]); // daftar mata kuliah
   const [selectedMataKuliah, setSelectedMataKuliah] = useState(""); // pilihan MK
   const [pertemuan, setPertemuan] = useState("1");
   const [materi, setMateri] = useState("");
@@ -11,6 +11,27 @@ export default function PageClient({ user }) {
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState("");
   const [csrfToken, setCsrfToken] = useState(""); // 🔥 token CSRF dari server
+
+// ==================== 🔹 CEK APAKAH ADA KODE AKTIF ====================
+  useEffect(() => {
+    const cekKodeAktif = async () => {
+      try {
+        const res = await fetch("/api/kode_presensi/presensi_status", {
+          credentials: "include",
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.status === "aktif") {
+            alert("Masih ada kode presensi aktif. Tidak bisa membuat kode baru.");
+            window.location.replace("/akun_assisten/kode_presensi/presensi_status");
+          }
+        }
+      } catch (err) {
+        console.error("Cek status error:", err);
+      }
+    };
+    cekKodeAktif();
+  }, []);
 
   // ==================== 🔹 1. AMBIL TOKEN CSRF SAAT HALAMAN DIBUKA ====================
   useEffect(() => {
@@ -48,49 +69,68 @@ export default function PageClient({ user }) {
     fetchDropdown();
   }, []);
 
-  // ==================== 🔹 3. KIRIM DATA KE SERVER ====================
+  // ==================== 🔹 3. KIRIM DATA KE SERVER (DENGAN LOKASI) ====================
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMsg("");
     setLoading(true);
 
-    try {
-      // 🔐 Kirim token CSRF via header + sertakan cookie via credentials: "include"
-      const res = await fetch("/api/kode_presensi", {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRF-Token": csrfToken, // ✅ wajib dikirim agar lolos secureHandler
-        },
-        body: JSON.stringify({
-          mata_kuliah_id: selectedMataKuliah,
-          pertemuan_ke: pertemuan,
-          materi,
-          kode,
-        }),
-      });
-
-      const data = await res.json();
-      console.log("Response:", data);
-
-      if (res.ok) {
-        setMsg("✅ Kode presensi berhasil dibuat!");
-        setMateri("");
-        setKode("");
-        // 🔁 Arahkan ke halaman status setelah 1 detik
-        setTimeout(() => {
-          window.location.replace("/akun_assisten/kode_presensi/presensi_status");
-        }, 1000);
-      } else {
-        setMsg("❌ " + (data.error || "Gagal membuat kode"));
-      }
-    } catch (err) {
-      console.error("POST error:", err);
-      setMsg("❌ Terjadi error koneksi");
-    } finally {
+    // 🌍 Ambil lokasi dari browser
+    if (!navigator.geolocation) {
+      setMsg("❌ Browser Anda tidak mendukung geolocation.");
       setLoading(false);
+      return;
     }
+
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const lokasi = `${pos.coords.latitude},${pos.coords.longitude}`;
+        console.log("📍 Lokasi Asisten:", lokasi);
+
+        try {
+          // 🔐 Kirim token CSRF via header + sertakan cookie via credentials: "include"
+          const res = await fetch("/api/kode_presensi", {
+            method: "POST",
+            credentials: "include",
+            headers: {
+              "Content-Type": "application/json",
+              "X-CSRF-Token": csrfToken, // ✅ wajib dikirim agar lolos secureHandler
+            },
+            body: JSON.stringify({
+              praktikum_id: selectedMataKuliah,
+              pertemuan_ke: pertemuan,
+              materi,
+              kode,
+              lokasi, // ✅ tambahkan lokasi ke body
+            }),
+          });
+
+          const data = await res.json();
+          console.log("Response:", data);
+
+          if (res.ok) {
+            setMsg("✅ Kode presensi berhasil dibuat!");
+            setMateri("");
+            setKode("");
+            // 🔁 Arahkan ke halaman status setelah 1 detik
+            setTimeout(() => {
+              window.location.replace("/akun_assisten/kode_presensi/presensi_status");
+            }, 1000);
+          } else {
+            setMsg("❌ " + (data.error || "Gagal membuat kode"));
+          }
+        } catch (err) {
+          console.error("POST error:", err);
+          setMsg("❌ Terjadi error koneksi");
+        } finally {
+          setLoading(false);
+        }
+      },
+      (err) => {
+        setMsg("❌ Gagal mendapatkan lokasi: " + err.message);
+        setLoading(false);
+      }
+    );
   };
 
   // ==================== 🔹 4. RENDER TAMPILAN ====================
@@ -183,7 +223,7 @@ export default function PageClient({ user }) {
           disabled={loading}
           className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
         >
-          {loading ? "Menyimpan..." : "Buat Kode"}
+          {loading ? "Mengambil lokasi..." : "Buat Kode"}
         </button>
 
         {/* Pesan status */}
