@@ -14,7 +14,7 @@ export default function Home() {
     { name: "Jadwal Praktikum", href: "/jadwal", icon: LayoutDashboard },
     { name: "Modul Praktikum", href: "/modul", icon: BookOpen },
     { name: "Akun Asisten", href: "/akun_assisten", icon: AirVent },
-    { name: "Akun Mahasiswa", href: "/login", icon: FileText },
+    { name: "Akun Mahasiswa", href: "/login_praktikan", icon: FileText },
   ];
 
   return (
