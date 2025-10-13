@@ -90,7 +90,7 @@ export default function FormPendaftaran() {
 
         // tunggu sebentar biar toast sempat muncul
         setTimeout(() => {
-          router.push("/profil")
+          router.push("/akun_praktikan")
         }, 1500)
       } else {
         setToast({ show: true, message: result.error || "Gagal mendaftar", type: 'error' })

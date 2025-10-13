@@ -1,4 +1,4 @@
-// app/profil/akun/page.jsx
+// app/akun_praktikan/akun/page.jsx
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { verifyToken } from "../../../lib/auth"; // ← perhatikan path

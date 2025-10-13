@@ -71,14 +71,14 @@ export default function PageClient({ user }) {
       {praktikan.status === "aktif" ? (
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           <Link
-            href="/profil/presensi"
+            href="/akun_praktikan/presensi"
             className="p-4 bg-blue-100 rounded-xl shadow hover:bg-blue-200 transition block text-center"
           >
             Presensi
           </Link>
 
           <Link
-            href="/profil/kumpul_tugas"
+            href="/akun_praktikan/kumpul_tugas"
             className="p-4 bg-yellow-100 rounded-xl shadow hover:bg-yellow-200 transition block text-center"
           >
             Kumpulkan Tugas
@@ -92,7 +92,7 @@ export default function PageClient({ user }) {
           </button>
 
           <Link
-            href="/profil/akun"
+            href="/akun_praktikan/akun"
             className="p-4 bg-orange-100 rounded-xl shadow hover:bg-orange-200 transition block text-center"
           >
             Akun

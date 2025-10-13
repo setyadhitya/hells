@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 /**
  * 🧾 Form Login Praktikan
  * - Mengirim username & password ke API
- * - Redirect ke /profil jika berhasil
+ * - Redirect ke /akun_praktikan jika berhasil
  */
 export default function LoginForm() {
   const [username, setUsername] = useState("");
@@ -28,7 +28,7 @@ export default function LoginForm() {
       const data = await res.json();
 
       if (res.ok) {
-        router.push("/profil");
+        router.push("/akun_praktikan");
       } else {
         setError(data.error || "Login gagal");
       }

@@ -116,12 +116,12 @@ export async function middleware(req) {
         new URL("/regler-admin-pengaturan/dashboard", origin)
       );
     if (user.role === "praktikan")
-      return NextResponse.redirect(new URL("/profil", origin));
+      return NextResponse.redirect(new URL("/akun_praktikan", origin));
     return NextResponse.redirect(new URL("/", origin));
   }
 
   // 👤 Proteksi halaman profil agar hanya bisa diakses oleh user role "praktikan"
-  if (pathname.startsWith("/profil")) {
+  if (pathname.startsWith("/akun_praktikan")) {
     // Jika belum login → arahkan ke login praktikan
     if (!user) {
       const loginUrl = new URL("/login_praktikan", origin);
@@ -188,8 +188,7 @@ export const config = {
   matcher: [
     "/regler-admin-pengaturan/:path*",
     "/dashboard/:path*",
-    "/profil/:path*",
-    "/akun_assisten/:path*", // ✅ Tambahkan agar proteksi asisten aktif
-    "/settings/:path*",
+    "/akun_praktikan/:path*",
+    "/akun_assisten/:path*",
   ],
 };

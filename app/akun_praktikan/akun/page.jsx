@@ -1,24 +1,21 @@
-// app/profil/page.jsx
+// app/akun_praktikan/akun/page.jsx
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { verifyToken } from "../../lib/auth";
+import { verifyToken } from "../../../lib/auth"; // ← perhatikan path
 import PageClient from "./PageClient";
 
-export default async function Profil() {
+export default async function AkunPage() {
   const cookieStore = await cookies();
   const token = cookieStore.get("token")?.value || null;
   const user = token ? await verifyToken(token) : null;
 
-  // 🔹 Kalau belum login → redirect ke login admin
   if (!user) {
-    return NextResponse.redirect(new URL("/login", req.url))
+    redirect("/login");
   }
 
-  // 🔹 Kalau role bukan praktikan → redirect ke dashboard
   if (user.role !== "praktikan") {
     redirect("/regler-admin-pengaturan/dashboard");
   }
 
-  // ✅ Kalau lolos semua → render client page
   return <PageClient user={user} />;
 }

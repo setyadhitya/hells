@@ -6,7 +6,7 @@ import LoginForm from "./LoginForm";
 
 /**
  * 🔐 Halaman Login Praktikan
- * - Jika sudah login → redirect ke /profil
+ * - Jika sudah login → redirect ke /akun_praktikan
  * - Jika belum → tampilkan form login
  */
 export default async function LoginPage() {
@@ -15,7 +15,7 @@ export default async function LoginPage() {
 
   const user = token ? await verifyToken(token) : null;
 
-  if (user) redirect("/profil");
+  if (user) redirect("/akun_praktikan");
 
   return <LoginForm />;
 }
