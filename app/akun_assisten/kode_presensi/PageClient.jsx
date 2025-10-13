@@ -2,49 +2,25 @@
 import { useEffect, useState } from "react";
 
 export default function PageClient({ user }) {
-  // 🧩 STATE UNTUK FORM DAN STATUS
-  const [dropdownData, setDropdownData] = useState([]); // daftar mata kuliah
-  const [selectedMataKuliah, setSelectedMataKuliah] = useState(""); // pilihan MK
+  // 🧩 STATE UTAMA
+  const [dropdownData, setDropdownData] = useState([]);   // daftar MK dari API
+  const [selectedMataKuliah, setSelectedMataKuliah] = useState(""); 
   const [pertemuan, setPertemuan] = useState("1");
   const [materi, setMateri] = useState("");
   const [kode, setKode] = useState("");
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState("");
-  const [csrfToken, setCsrfToken] = useState(""); // 🔥 token CSRF dari server
+  const [csrfToken, setCsrfToken] = useState(""); 
+  const [noData, setNoData] = useState(false); // 🔹 jika asisten belum punya data praktikum
 
-// ==================== 🔹 CEK APAKAH ADA KODE AKTIF ====================
-  useEffect(() => {
-    const cekKodeAktif = async () => {
-      try {
-        const res = await fetch("/api/kode_presensi/presensi_status", {
-          credentials: "include",
-        });
-        if (res.ok) {
-          const data = await res.json();
-          if (data.status === "aktif") {
-            alert("Masih ada kode presensi aktif. Tidak bisa membuat kode baru.");
-            window.location.replace("/akun_assisten/kode_presensi/presensi_status");
-          }
-        }
-      } catch (err) {
-        console.error("Cek status error:", err);
-      }
-    };
-    cekKodeAktif();
-  }, []);
-
-  // ==================== 🔹 1. AMBIL TOKEN CSRF SAAT HALAMAN DIBUKA ====================
+  // ==================== 🔹 1. AMBIL TOKEN CSRF ====================
   useEffect(() => {
     const fetchCsrf = async () => {
       try {
         const res = await fetch("/api/csrf", { credentials: "include" });
         const data = await res.json();
-        if (res.ok) {
-          setCsrfToken(data.token);
-          console.log("🟢 CSRF token loaded:", data.token.slice(0, 10) + "...");
-        } else {
-          console.error("CSRF fetch failed:", data.error);
-        }
+        if (res.ok) setCsrfToken(data.token);
+        else console.warn("CSRF fetch failed:", data.error);
       } catch (err) {
         console.error("CSRF fetch error:", err);
       }
@@ -52,7 +28,7 @@ export default function PageClient({ user }) {
     fetchCsrf();
   }, []);
 
-  // ==================== 🔹 2. AMBIL DATA DROPDOWN MATA KULIAH ====================
+  // ==================== 🔹 2. AMBIL DATA DROPDOWN (MATA KULIAH ASISTEN) ====================
   useEffect(() => {
     const fetchDropdown = async () => {
       try {
@@ -60,80 +36,95 @@ export default function PageClient({ user }) {
           credentials: "include",
         });
         const data = await res.json();
-        if (res.ok) setDropdownData(data);
-        else console.warn("Gagal ambil data dropdown:", data.error);
+        if (res.ok) {
+          if (data.length === 0) {
+            setNoData(true); // 🚫 Tidak ada data praktikum
+          } else {
+            setDropdownData(data);
+          }
+        } else {
+          console.warn("Gagal ambil data dropdown:", data.error);
+          setNoData(true);
+        }
       } catch (err) {
         console.error("Dropdown error:", err);
+        setNoData(true);
       }
     };
     fetchDropdown();
   }, []);
 
-  // ==================== 🔹 3. KIRIM DATA KE SERVER (DENGAN LOKASI) ====================
+  // ==================== 🔹 3. KIRIM DATA KE SERVER ====================
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMsg("");
     setLoading(true);
 
-    // 🌍 Ambil lokasi dari browser
-    if (!navigator.geolocation) {
-      setMsg("❌ Browser Anda tidak mendukung geolocation.");
-      setLoading(false);
-      return;
-    }
+    try {
+      // Ambil lokasi GPS asisten
+      const lokasi = await new Promise((resolve, reject) => {
+        if (!navigator.geolocation) reject("Browser tidak mendukung geolocation");
+        navigator.geolocation.getCurrentPosition(
+          (pos) =>
+            resolve(`${pos.coords.latitude},${pos.coords.longitude}`),
+          (err) => reject("Gagal ambil lokasi: " + err.message)
+        );
+      });
 
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        const lokasi = `${pos.coords.latitude},${pos.coords.longitude}`;
-        console.log("📍 Lokasi Asisten:", lokasi);
+      const res = await fetch("/api/kode_presensi", {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": csrfToken,
+        },
+        body: JSON.stringify({
+          praktikum_id: selectedMataKuliah,
+          pertemuan_ke: pertemuan,
+          materi,
+          kode,
+          lokasi, // ✅ lokasi dikirim ke server
+        }),
+      });
 
-        try {
-          // 🔐 Kirim token CSRF via header + sertakan cookie via credentials: "include"
-          const res = await fetch("/api/kode_presensi", {
-            method: "POST",
-            credentials: "include",
-            headers: {
-              "Content-Type": "application/json",
-              "X-CSRF-Token": csrfToken, // ✅ wajib dikirim agar lolos secureHandler
-            },
-            body: JSON.stringify({
-              praktikum_id: selectedMataKuliah,
-              pertemuan_ke: pertemuan,
-              materi,
-              kode,
-              lokasi, // ✅ tambahkan lokasi ke body
-            }),
-          });
+      const data = await res.json();
+      console.log("Response:", data);
 
-          const data = await res.json();
-          console.log("Response:", data);
-
-          if (res.ok) {
-            setMsg("✅ Kode presensi berhasil dibuat!");
-            setMateri("");
-            setKode("");
-            // 🔁 Arahkan ke halaman status setelah 1 detik
-            setTimeout(() => {
-              window.location.replace("/akun_assisten/kode_presensi/presensi_status");
-            }, 1000);
-          } else {
-            setMsg("❌ " + (data.error || "Gagal membuat kode"));
-          }
-        } catch (err) {
-          console.error("POST error:", err);
-          setMsg("❌ Terjadi error koneksi");
-        } finally {
-          setLoading(false);
-        }
-      },
-      (err) => {
-        setMsg("❌ Gagal mendapatkan lokasi: " + err.message);
-        setLoading(false);
+      if (res.ok) {
+        setMsg("✅ Kode presensi berhasil dibuat!");
+        setMateri("");
+        setKode("");
+        setTimeout(() => {
+          window.location.replace("/akun_assisten/kode_presensi/presensi_status");
+        }, 1000);
+      } else {
+        setMsg("❌ " + (data.error || "Gagal membuat kode"));
       }
-    );
+    } catch (err) {
+      console.error("POST error:", err);
+      setMsg("❌ " + err);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // ==================== 🔹 4. RENDER TAMPILAN ====================
+  // ==================== 🔹 4. TAMPILAN HALAMAN ====================
+  if (noData) {
+    return (
+      <main className="min-h-screen flex flex-col items-center justify-center text-center p-6 bg-gradient-to-br from-blue-50 via-white to-indigo-100">
+        <div className="bg-white/80 backdrop-blur-md p-8 rounded-2xl shadow-md max-w-md border border-gray-200">
+          <h1 className="text-2xl font-bold text-gray-800 mb-4">Tidak Ada Praktikum</h1>
+          <p className="text-gray-600 mb-4">
+            Kamu belum terdaftar sebagai asisten pada praktikum mana pun.
+          </p>
+          <p className="text-gray-500 text-sm">
+            Silakan hubungi admin untuk menambahkan kamu ke daftar asisten praktikum.
+          </p>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="max-w-2xl mx-auto p-6">
       <h1 className="text-2xl font-bold mb-4 text-blue-700">Buat Kode Presensi</h1>
@@ -223,7 +214,7 @@ export default function PageClient({ user }) {
           disabled={loading}
           className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
         >
-          {loading ? "Mengambil lokasi..." : "Buat Kode"}
+          {loading ? "Menyimpan..." : "Buat Kode"}
         </button>
 
         {/* Pesan status */}

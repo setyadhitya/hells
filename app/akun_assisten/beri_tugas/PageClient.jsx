@@ -1,4 +1,3 @@
-// app/akun_assisten/beri_tugas/PageClient.jsx
 "use client";
 import { useEffect, useState } from "react";
 
@@ -12,17 +11,26 @@ export default function PageClient({ user }) {
   });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [noData, setNoData] = useState(false); // 🔹 kalau belum punya data praktikum
 
   // ==================== 🔹 AMBIL DROPDOWN MATA KULIAH ====================
   useEffect(() => {
     const fetchMataKuliah = async () => {
       try {
-        const res = await fetch("/api/akun_assisten/dropdown");
+        const res = await fetch("/api/akun_assisten/dropdown", {
+          credentials: "include",
+        });
         const data = await res.json();
-        if (res.ok) setMataKuliah(data.matkul);
-        else console.warn("Dropdown gagal:", data.error);
+
+        // Kalau data kosong → tampilkan pesan
+        if (res.ok && data.matkul && data.matkul.length > 0) {
+          setMataKuliah(data.matkul);
+        } else {
+          setNoData(true);
+        }
       } catch (err) {
         console.error("Dropdown fetch error:", err);
+        setNoData(true);
       }
     };
     fetchMataKuliah();
@@ -75,18 +83,50 @@ export default function PageClient({ user }) {
     }
   };
 
-  // ==================== 🔹 RENDER HALAMAN ====================
+  // ==================== 🔹 TAMPILAN KALAU BELUM ADA PRAKTIKUM ====================
+  if (noData) {
+    return (
+      <main className="min-h-screen flex flex-col items-center justify-center text-center p-6 bg-gradient-to-br from-blue-50 via-white to-indigo-100">
+        <div className="bg-white/80 backdrop-blur-md p-8 rounded-2xl shadow-md max-w-md border border-gray-200">
+          <h1 className="text-2xl font-bold text-gray-800 mb-4">
+            Tidak Ada Praktikum
+          </h1>
+          <p className="text-gray-600 mb-4">
+            Kamu belum terdaftar mengampu praktikum apa pun.
+          </p>
+          <p className="text-gray-500 text-sm">
+            Silakan hubungi admin untuk menambahkan kamu ke daftar asisten praktikum.
+          </p>
+
+          <button
+            onClick={() => (window.location.href = "/akun_assisten")}
+            className="mt-6 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow"
+          >
+            Kembali ke Dashboard
+          </button>
+        </div>
+      </main>
+    );
+  }
+
+  // ==================== 🔹 FORM NORMAL ====================
   return (
     <main className="max-w-3xl mx-auto py-10 px-4">
-      <h1 className="text-2xl font-bold mb-6 text-blue-700">Beri Tugas</h1>
+      <h1 className="text-2xl font-bold mb-6 text-blue-700">🧾 Beri Tugas</h1>
 
       {message && (
-        <p className="mb-4 text-center font-semibold text-green-600">{message}</p>
+        <p
+          className={`mb-4 text-center font-semibold ${
+            message.startsWith("✅") ? "text-green-600" : "text-red-600"
+          }`}
+        >
+          {message}
+        </p>
       )}
 
       <form
         onSubmit={handleSubmit}
-        className="space-y-4 bg-white p-6 rounded-lg shadow"
+        className="space-y-4 bg-white p-6 rounded-lg shadow border border-gray-200"
       >
         {/* Dropdown Mata Kuliah */}
         <div>
