@@ -120,6 +120,13 @@ export default function PageClient({ user }) {
           <p className="text-gray-500 text-sm">
             Silakan hubungi admin untuk menambahkan kamu ke daftar asisten praktikum.
           </p>
+
+          <button
+            onClick={() => (window.location.href = "/akun_assisten")}
+            className="mt-6 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow"
+          >
+            Kembali ke Dashboard
+          </button>
         </div>
       </main>
     );

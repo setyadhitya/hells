@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle, XCircle } from "lucide-react";
 
@@ -9,7 +9,28 @@ export default function PageClient({ user }) {
   const [message, setMessage] = useState("");
   const [status, setStatus] = useState(""); // "success" | "error"
   const [loading, setLoading] = useState(false);
+  const [allowed, setAllowed] = useState(null); // ✅ apakah praktikan terdaftar
 
+  // 🔹 Cek apakah praktikan terdaftar di praktikum
+  useEffect(() => {
+    const checkPeserta = async () => {
+      try {
+        const res = await fetch("/api/peserta/check", { credentials: "include" });
+        const data = await res.json();
+        if (res.ok && data.registered) {
+          setAllowed(true);
+        } else {
+          setAllowed(false);
+        }
+      } catch (err) {
+        console.error("Check peserta error:", err);
+        setAllowed(false);
+      }
+    };
+    checkPeserta();
+  }, []);
+
+  // 🔹 Form presensi
   const handlePresensi = async (e) => {
     e.preventDefault();
     setMessage("");
@@ -36,7 +57,6 @@ export default function PageClient({ user }) {
               setStatus("success");
               setKode("");
 
-              // 🌟 Hilangkan otomatis setelah 3 detik
               setTimeout(() => {
                 setMessage("");
                 setStatus("");
@@ -66,6 +86,42 @@ export default function PageClient({ user }) {
     }
   };
 
+  // 🔹 Jika belum ada data dari API
+  if (allowed === null) {
+    return (
+      <main className="min-h-screen flex justify-center items-center text-gray-600">
+        Memeriksa status praktikum...
+      </main>
+    );
+  }
+
+  // 🔹 Jika belum terdaftar
+  if (!allowed) {
+    return (
+      <main className="min-h-screen flex flex-col items-center justify-center text-center p-6 bg-gradient-to-br from-blue-50 via-white to-indigo-100">
+        <div className="bg-white/80 backdrop-blur-md p-8 rounded-2xl shadow-md max-w-md border border-gray-200">
+          <h1 className="text-2xl font-bold text-gray-800 mb-4">
+            Tidak Terdaftar di Praktikum
+          </h1>
+          <p className="text-gray-600 mb-4">
+            Kamu belum terdaftar sebagai peserta pada praktikum mana pun.
+          </p>
+          <p className="text-gray-500 text-sm">
+            Silakan hubungi admin atau dosen untuk menambahkan kamu ke daftar peserta praktikum.
+          </p>
+
+          <button
+            onClick={() => (window.location.href = "/akun_praktikan")}
+            className="mt-6 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow"
+          >
+            Kembali ke Dashboard
+          </button>
+        </div>
+      </main>
+    );
+  }
+
+  // 🔹 Tampilan normal presensi
   return (
     <main className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-100 flex justify-center items-center px-4">
       <motion.div
@@ -101,7 +157,6 @@ export default function PageClient({ user }) {
           </button>
         </form>
 
-        {/* Pesan notifikasi (animasi muncul/hilang) */}
         <AnimatePresence>
           {message && (
             <motion.div
@@ -125,7 +180,6 @@ export default function PageClient({ user }) {
           )}
         </AnimatePresence>
 
-        {/* Info tambahan user */}
         <p className="text-xs text-gray-400 mt-6 text-center">
           Login sebagai: <span className="font-semibold">{user?.username}</span>
         </p>
