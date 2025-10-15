@@ -1,5 +1,5 @@
 import { cookies } from "next/headers"
-import { verifyToken } from "../../../../lib/auth"
+import { verifyToken } from "../../../lib/auth"
 
 export async function GET(req) { // bisa juga POST atau method lain sesuai kebutuhan
   const cookieStore = cookies() // server-side
