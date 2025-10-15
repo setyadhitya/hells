@@ -2,28 +2,22 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link"; // ✅ diperlukan untuk navigasi internal
+import Link from "next/link";
 
 export default function PageClient({ user }) {
   const router = useRouter();
-  const [assisten, setAssisten] = useState(null); // data asisten login
-  const [loading, setLoading] = useState(true);   // state loading
-  const [error, setError] = useState("");         // pesan error
+  const [assisten, setAssisten] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  // ==================== 🔹 Ambil data profil asisten ====================
   useEffect(() => {
     const fetchData = async () => {
       try {
         const res = await fetch("/api/assisten", {
-          credentials: "include", // 🧩 kirim cookie JWT ke server
+          credentials: "include",
         });
-
         const data = await res.json();
-
-        if (!res.ok) {
-          throw new Error(data.error || "Gagal mengambil data asisten");
-        }
-
+        if (!res.ok) throw new Error(data.error || "Gagal mengambil data asisten");
         setAssisten(data);
       } catch (err) {
         console.error("Fetch Asisten Error:", err);
@@ -32,25 +26,22 @@ export default function PageClient({ user }) {
         setLoading(false);
       }
     };
-
     fetchData();
   }, []);
 
-  // ==================== 🔹 Fungsi Logout ====================
   const handleLogout = async () => {
     try {
       await fetch("/api/auth_assisten/logout", {
         method: "POST",
         credentials: "include",
       });
-      router.push("/"); // arahkan ke login
+      router.push("/");
     } catch (err) {
       console.error("Logout error:", err);
       alert("Gagal logout. Coba lagi.");
     }
   };
 
-  // ==================== 🔹 Kondisi tampilan ====================
   if (loading)
     return <p className="text-center py-10 text-gray-500">Memuat data...</p>;
 
@@ -74,10 +65,8 @@ export default function PageClient({ user }) {
       </p>
     );
 
-  // ==================== 🔹 Tampilan utama ====================
   return (
     <main className="max-w-4xl mx-auto py-10 px-6">
-      {/* 🔸 Header Profil */}
       <div className="bg-white shadow rounded-lg p-6 mb-6 border">
         <h1 className="text-2xl font-bold text-gray-800">Halaman Asisten</h1>
         <p className="mt-2 text-gray-600">Halo, {assisten.nama}</p>
@@ -86,19 +75,15 @@ export default function PageClient({ user }) {
         </p>
         <p
           className={`mt-2 font-semibold ${
-            assisten.status === "aktif"
-              ? "text-green-600"
-              : "text-red-600"
+            assisten.status === "aktif" ? "text-green-600" : "text-red-600"
           }`}
         >
           Status: {assisten.status}
         </p>
       </div>
 
-      {/* 🔸 Menu (tampil hanya jika status aktif) */}
       {assisten.status === "aktif" ? (
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          {/* ✅ Menu Buat Kode Presensi */}
           <Link
             href="/akun_assisten/kode_presensi"
             className="p-4 bg-blue-100 rounded-xl shadow hover:bg-blue-200 transition block text-center"
@@ -106,7 +91,6 @@ export default function PageClient({ user }) {
             Buat Kode Presensi
           </Link>
 
-          {/* ✅ Menu Penugasan */}
           <Link
             href="/akun_assisten/beri_tugas"
             className="p-4 bg-yellow-100 rounded-xl shadow hover:bg-yellow-200 transition block text-center"
@@ -114,17 +98,14 @@ export default function PageClient({ user }) {
             Penugasan
           </Link>
 
-          {/* ✅ Menu Aktivitas */}
           <button className="p-4 bg-green-100 rounded-xl shadow hover:bg-green-200 transition block text-center">
             Aktivitas
           </button>
 
-          {/* ✅ Menu Pengumuman */}
           <button className="p-4 bg-purple-100 rounded-xl shadow hover:bg-purple-200 transition block text-center">
             Pengumuman
           </button>
 
-          {/* ✅ Menu Akun */}
           <Link
             href="/akun_assisten/akun"
             className="p-4 bg-orange-100 rounded-xl shadow hover:bg-orange-200 transition block text-center"
@@ -132,7 +113,6 @@ export default function PageClient({ user }) {
             Akun
           </Link>
 
-          {/* 🔴 Tombol Logout */}
           <button
             onClick={handleLogout}
             className="p-4 bg-red-500 text-white font-semibold rounded-xl shadow hover:bg-red-600 transition block text-center"
